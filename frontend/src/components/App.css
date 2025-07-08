@@ -1,0 +1,106 @@
+/* Yeni layout için eklemeler */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.topbar {
+  height: 60px;
+  background-color: #ff4d4f; /* 🔴 Kırmızı */
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid #d9d9d9;
+  font-weight: bold;
+  color: white; /* Yazı beyaz olsun */
+}
+
+
+.main-row {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 60px);
+}
+
+.toolbar {
+  width: 240px;
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  box-shadow: 1px 0 3px rgba(0,0,0,0.03);
+}
+
+.toolbar .toolbar-btn {
+  width: 100%;
+  padding: 16px 0;
+  margin-bottom: 12px;
+  background: #ff4d4f; /* Kırmızı buton rengi */
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem; /* rem birimi eksikti, düzelttim */
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: bold;
+}
+
+/* Hover efekti */
+.toolbar .toolbar-btn:hover {
+  background: #d9363e; /* Koyu kırmızı */
+}
+
+/* İstersen yeni node butonlarına farklı renk vermek için: */
+.toolbar .toolbar-btn.adp {
+  background: #4a90e2; /* Mavi */
+}
+
+.toolbar .toolbar-btn.invertor {
+  background: #f5a623; /* Turuncu */
+}
+
+
+
+.canvas-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9f9f9;
+  padding: 0;
+}
+
+.sidebar {
+  width: 240px;
+  background: #fff;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px 10px;
+  border-left: 1px solid #222;
+}
+
+.sidebar .sidebar-btn {
+  width: 100%;
+  padding: 16px 0;
+  margin-bottom: 12px;
+  background: #ff4d4f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: bold;
+}
+
+.sidebar .sidebar-btn:hover {
+  background: #d9363e;
+}
