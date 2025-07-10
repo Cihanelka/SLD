@@ -1,106 +1,170 @@
-/* Yeni layout için eklemeler */
-.app-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-.topbar {
-  height: 60px;
-  background-color: #ff4d4f; /* 🔴 Kırmızı */
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  border-bottom: 1px solid #d9d9d9;
-  font-weight: bold;
-  color: white; /* Yazı beyaz olsun */
-}
-
-
-.main-row {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  height: calc(100vh - 60px);
-}
-
-.toolbar {
-  width: 240px;
+.topbar-modern {
   background: #fff;
-  border-right: 1px solid #e0e0e0;
+  color: #222;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  height: 64px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding-top: 10px;
-  box-shadow: 1px 0 3px rgba(0,0,0,0.03);
+  padding: 0 32px;
+  border-bottom: 1px solid #eee;
+  justify-content: space-between;
 }
-
-.toolbar .toolbar-btn {
-  width: 100%;
-  padding: 16px 0;
-  margin-bottom: 12px;
-  background: #ff4d4f; /* Kırmızı buton rengi */
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem; /* rem birimi eksikti, düzelttim */
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.2s;
+.topbar-title {
+  font-size: 1.4rem;
   font-weight: bold;
+  letter-spacing: 0.5px;
+}
+.topbar-btn-group {
+  display: flex;
+  gap: 12px;
+}
+.topbar-btn {
+  background: #f5f5f5;
+  color: #e60f0f;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.topbar-btn.active, .topbar-btn:hover {
+  background: #fcfdff;
+  color: #c61010;
+}
+.topbar-btn.save {
+  background: #f8f3f3;
+  color: #eb0c0c;
+}
+.topbar-btn.save:hover {
+  background: #efebeb;
 }
 
-/* Hover efekti */
-.toolbar .toolbar-btn:hover {
-  background: #d9363e; /* Koyu kırmızı */
+.topbar-red {
+  background: #ff4d4f !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  border-bottom: 1px solid #eee;
+  justify-content: space-between;
 }
-
-/* İstersen yeni node butonlarına farklı renk vermek için: */
-.toolbar .toolbar-btn.adp {
-  background: #4a90e2; /* Mavi */
+.topbar-red .topbar-title {
+  color: #fff !important;
 }
-
-.toolbar .toolbar-btn.invertor {
-  background: #f5a623; /* Turuncu */
+.topbar-btn-group {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  align-items: center;
 }
-
-
-
-.canvas-area {
-  flex: 1;
+.topbar-btn {
+  background: #fff;
+  color: #ff4d4f;
+  border: 2px solid #ff4d4f;
+  border-radius: 8px;
+  padding: 10px 32px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  min-width: 150px;
+  min-height: 44px;
+  box-shadow: 0 2px 8px rgba(255,77,79,0.08);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f9f9f9;
-  padding: 0;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+.topbar-btn.active, .topbar-btn:hover {
+  background: #f6f2f2;
+  color: #dd0e0e;
 }
 
-.sidebar {
-  width: 240px;
+.toolbar-modern {
   background: #fff;
-  color: #222;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 20px 10px;
-  border-left: 1px solid #222;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  margin: 24px 0 24px 24px;
+  padding: 32px 20px;
+  min-width: 220px;
+  align-items: stretch;
 }
-
-.sidebar .sidebar-btn {
-  width: 100%;
-  padding: 16px 0;
-  margin-bottom: 12px;
-  background: #ff4d4f;
+.toolbar-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 24px;
+  color: #f5f7f9;
+  text-align: center;
+}
+.toolbar-btn {
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+  margin-bottom: 16px;
+  padding: 14px 0;
+  background: linear-gradient(90deg, #f2f6f9 0%, #e4e5e6 100%);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  font-size: rem;
-  text-align: left;
   cursor: pointer;
-  transition: background 0.2s;
-  font-weight: bold;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.toolbar-btn.adp {
+  background: linear-gradient(90deg, #f1f2f3 0%, #f2f3f5 100%);
+}
+.toolbar-btn.invertor {
+  background: linear-gradient(90deg, #f5a623 0%, #ff9800 100%);
+}
+.toolbar-btn:hover {
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.16);
+  filter: brightness(0.95);
 }
 
-.sidebar .sidebar-btn:hover {
-  background: #d9363e;
+/* --- TOOLBAR KIRMIZI YAZI VE STACK --- */
+.toolbar-title.toolbar-red {
+  color: #ff4d4f !important;
+}
+.toolbar-btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.toolbar-red-text {
+  color: #ff4d4f !important;
+  background: #fff !important;
+  border: 2px solid #ff4d4f !important;
+}
+.toolbar-red-text:hover {
+  background: #ff4d4f !important;
+  color: #fff !important;
+}
+
+.sidebar-modern {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  margin: 24px 24px 24px 0;
+  padding: 32px 20px;
+  min-width: 220px;
+}
+.sidebar-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 24px;
+  color: #ff4d4f;
+  text-align: center;
+}
+.sidebar ul {
+  padding-left: 18px;
+}
+.sidebar li {
+  font-size: 1.05rem;
+  margin-bottom: 8px;
 }
