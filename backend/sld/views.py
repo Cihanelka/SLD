@@ -21,12 +21,26 @@ class SaveSchemaView(APIView):
     def post(self, request):
         data = request.data.get("data")
         name = request.data.get("name", "Untitled")
+        schema_id = request.data.get("schema_id")
 
         if not data:
             return Response({"error": "No data provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Her kaydetmede yeni bir schema oluştur
-        schema = Schema.objects.create(name=name, station_id=f"station_{random.randint(1, 1000000)}")
+        # Eğer schema_id varsa mevcut schema'yı kullan, yoksa yeni oluştur
+        if schema_id:
+            try:
+                schema = Schema.objects.get(id=schema_id)
+                schema.name = name  # İsmi güncelle
+                schema.save()
+            except Schema.DoesNotExist:
+                return Response({"error": "Schema not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            # Yeni schema oluştur
+            schema = Schema.objects.create(name=name, station_id=f"station_{random.randint(1, 1000000)}")
+
+        # Mevcut node'ları ve edge'leri sil
+        schema.nodes.all().delete()
+        schema.edges.all().delete()
 
         cells = data.get("cells", [])
         nodes_map = {}
@@ -41,7 +55,7 @@ class SaveSchemaView(APIView):
             y = cell.get("y", 0)
             width = cell.get("width", 0)
             height = cell.get("height", 0)
-            label = cell.get("label", {}).get("text", "") or ""
+            label = cell.get("label", "") or ""  # label artık sadece string
             node_type = cell.get("type", "")
 
             node = Node.objects.create(
@@ -85,10 +99,20 @@ class CreateSchemaView(APIView):
     def post(self, request):
         name = request.data.get("name")
         station_id = request.data.get("station_id")
+        label = request.data.get("label")
+        type_ = request.data.get("type")
+        
         if not name or not station_id:
             return Response({"error": "name ve station_id zorunlu"}, status=status.HTTP_400_BAD_REQUEST)
+        
         schema = Schema.objects.create(name=name, station_id=station_id)
+
+        # Örneğin label ve type Node'daysa:
+        if label and type_:
+            Node.objects.create(schema=schema, label=label, type=type_)
+
         return Response({"schema_id": schema.id, "name": schema.name}, status=status.HTTP_201_CREATED)
+
 
 
 class ListSchemasView(APIView):

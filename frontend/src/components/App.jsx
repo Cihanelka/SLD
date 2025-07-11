@@ -126,28 +126,74 @@ function App() {
 
   // Şemayı kaydetme fonksiyonu
   const onSave = async () => {
-    const graphData = graphRef.current?.toJSON();
-    if (!graphData) return;
+  if (!graphRef.current) return;
 
-    try {
-      const response = await fetch('http://localhost:8000/api/save-schema/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: schemaInfo?.name || 'Untitled',
-          data: graphData,
-        }),
-      });
+  const nodes = graphRef.current.getNodes();
+  const edges = graphRef.current.getEdges();
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+  const cells = [];
 
-      alert('Şema başarıyla kaydedildi!');
-    } catch (error) {
-      alert(`Kaydetme hatası: ${error.message}`);
+  nodes.forEach(node => {
+    console.log('node:',node)
+    const position = node.getPosition();
+    const size = node.getSize();
+    // label/text olarak metin al, yoksa boş string
+    const labelText = node.getAttrByPath('text/text') || '';
+    // nodeType varsa onu kullan, yoksa labelText
+    const nodeType = node.getAttrByPath('nodeType') || labelText;
+
+    cells.push({
+      id: node.id,
+      shape: 'rect',
+      x: position.x,
+      y: position.y,
+      width: size.width,
+      height: size.height,
+      label:  labelText ,
+      type: nodeType,
+      attrs: node.getAttrs()
+    });
+  });
+
+  edges.forEach(edge => {
+    const source = edge.getSource();
+    const target = edge.getTarget();
+    const labelText = edge.getAttrByPath('label/text') || '';
+
+    cells.push({
+      id: edge.id,
+      shape: 'edge',
+      source: source.cell,
+      target: target.cell,
+      label: { text: labelText },
+      attrs: edge.getAttrs()
+    });
+  });
+
+  const graphData = { cells };
+  console.log(JSON.stringify(graphData, null, 2));
+
+  try {
+    const response = await fetch('http://localhost:8000/api/save-schema/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: schemaInfo?.name || 'Untitled',
+        schema_id: schemaInfo?.schema_id,
+        data: graphData,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
-  };
+
+    alert('Şema başarıyla kaydedildi!');
+  } catch (error) {
+    alert(`Kaydetme hatası: ${error.message}`);
+  }
+};
+
 
   // Yeni şema oluşturma fonksiyonu
   const createSchema = async () => {
@@ -183,7 +229,8 @@ function App() {
               data.nodes.forEach(node => {
                 // Node tipine göre port konfigürasyonu
                 let portConfig;
-                if (node.label === 'ADP') {
+                const nodeType = node.type || node.label; // Backend'den gelen type alanını kullan
+                if (nodeType === 'ADP') {
                   portConfig = {
                     groups: {
                       out: {
@@ -203,7 +250,7 @@ function App() {
                       { group: 'out' },
                     ],
                   };
-                } else if (node.label === 'Inv') {
+                } else if (nodeType === 'Inv') {
                   portConfig = {
                     groups: {
                       in: {
@@ -266,8 +313,9 @@ function App() {
                   width: node.width,
                   height: node.height,
                   label: node.label,
+                  nodeType: nodeType, // Node tipini sakla
                   attrs: {
-                    body: { fill: '#a3d5ff', stroke: '#333' },
+                    body: { fill: nodeType === 'ADP' ? '#a3d5ff' : '#ffd59e', stroke: '#333' },
                     label: { fill: '#000' }
                   },
                   ports: portConfig,
