@@ -76,8 +76,10 @@ class SaveSchemaView(APIView):
                 continue
 
             edge_id = cell.get("id")
-            source_id = cell.get("source", {}).get("cell") if isinstance(cell.get("source"), dict) else cell.get("source")
-            target_id = cell.get("target", {}).get("cell") if isinstance(cell.get("target"), dict) else cell.get("target")
+            source = cell.get("source")
+            target = cell.get("target")
+            source_id = source.get("cell") if isinstance(source, dict) else source
+            target_id = target.get("cell") if isinstance(target, dict) else target
             label = cell.get("label", {}).get("text", "") if isinstance(cell.get("label"), dict) else cell.get("label", "")
 
             source_node = nodes_map.get(source_id)

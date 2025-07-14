@@ -88,14 +88,22 @@ export const createNodeConfig = (type) => {
     y: 100,
     width: type === 'Inv' ? 30 : 120,
     height: type === 'Inv' ? 30 : 40,
-    label: type,
+    label: type, // Başlangıçta type ile aynı
+    nodeType: type, // Type sabit kalacak
     attrs: {
-      body: { fill: type === 'ADP' ? '#a3d5ff' : '#ffd59e', stroke: '#333' },
-      label: { fill: '#000' }
+      body: { 
+        fill: type === 'ADP' ? '#a3d5ff' : '#ffd59e', 
+        stroke: '#333',
+      },
+      label: { 
+        text: type,
+        fill: '#000' 
+      },
     },
     ports: portConfig,
   };
 };
+
 
 // Node ekleme fonksiyonu
 export const addNode = (graphRef, type, setNodes) => {
@@ -104,4 +112,4 @@ export const addNode = (graphRef, type, setNodes) => {
   const nodeConfig = createNodeConfig(type);
   graphRef.current.addNode(nodeConfig);
   setNodes(prev => [...prev, { id: nodeConfig.id, type }]);
-}; 
+};

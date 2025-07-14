@@ -11,8 +11,8 @@ export const saveSchema = async (graphRef, schemaInfo) => {
     console.log('node:', node);
     const position = node.getPosition();
     const size = node.getSize();
-    const labelText = node.getAttrByPath('text/text') || '';
-    const nodeType = node.getAttrByPath('nodeType') || labelText;
+    const labelText = node.getAttrByPath('label/text') || node.getProp('label') || '';
+    const nodeType = node.getProp('nodeType') || node.getAttrByPath('nodeType') || '';
 
     cells.push({
       id: node.id,
@@ -35,8 +35,8 @@ export const saveSchema = async (graphRef, schemaInfo) => {
     cells.push({
       id: edge.id,
       shape: 'edge',
-      source: source.cell,
-      target: target.cell,
+      source: source.cell || source,
+      target: target.cell || target,
       label: { text: labelText },
       attrs: edge.getAttrs()
     });

@@ -44,27 +44,52 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
                 width: node.width,
                 height: node.height,
                 label: node.label,
-                nodeType: nodeType,
+                nodeType: nodeType, // Type sabit kalacak
                 attrs: {
-                  body: { fill: nodeType === 'ADP' ? '#a3d5ff' : '#ffd59e', stroke: '#333' },
-                  label: { fill: '#000' }
+                  body: { 
+                    fill: nodeType === 'ADP' ? '#a3d5ff' : '#ffd59e', 
+                    stroke: '#333',
+                  },
+                  label: { 
+                    text: node.label,
+                    fill: '#000' 
+                  },
                 },
                 ports: portConfig,
               });
             });
             
             data.edges.forEach(edge => {
-              graphRef.current.addEdge({ ...edge, shape: 'edge' });
+              graphRef.current.addEdge({ 
+                ...edge, 
+                shape: 'edge',
+                attrs: {
+                  line: {
+                    stroke: '#ff0000',
+                    strokeWidth: 2,
+                    strokeDasharray: '5 5',
+                    targetMarker: {
+                      name: 'classic',
+                      size: 6,
+                      fill: '#ff0000',
+                      stroke: '#ff0000',
+                    },
+                    style: {
+                      animation: 'dash-animation 1s linear infinite',
+                    },
+                  },
+                },
+              });
             });
             
             setNodes(data.nodes);
           } catch (error) {
             console.error('Backend hatası:', error);
-            if (graphRef.current) graphRef.current.clear();
+            if (graphRef.current) graphRef.current.clearCells();
             setNodes([]);
           }
         } else {
-          graphRef.current.clear();
+          graphRef.current.clearCells();
           setNodes([]);
         }
       } else {
