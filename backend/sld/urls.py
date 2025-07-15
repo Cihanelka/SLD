@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import NodeViewSet, EdgeViewSet
-from .views import SaveSchemaView, CreateSchemaView, ListSchemasView, SchemaDetailView
+from .views import SaveSchemaView, CreateSchemaView, ListSchemasView, SchemaDetailView, NodeDetailByTomlIdView
 
 
 router = DefaultRouter()
@@ -14,4 +14,5 @@ urlpatterns = [
     path('create-schema/', CreateSchemaView.as_view(), name='create-schema'),
     path('list-schemas/', ListSchemasView.as_view(), name='list-schemas'),
     path('schema-detail/<int:schema_id>/', SchemaDetailView.as_view(), name='schema-detail'),
+    path('node-detail/<str:toml_id>/', NodeDetailByTomlIdView.as_view(), name='node-detail-by-toml'),
 ]

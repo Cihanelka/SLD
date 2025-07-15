@@ -11,6 +11,7 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
   const graphRef = useRef(null);
   const [mode, setMode] = useState('edit');
   const [nodes, setNodes] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
 
   // Node ekleme fonksiyonu
   const handleAddNode = (type) => {
@@ -46,13 +47,15 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
                 label: node.label,
                 nodeType: nodeType, // Type sabit kalacak
                 attrs: {
-                  body: { 
-                    fill: nodeType === 'ADP' ? '#a3d5ff' : '#ffd59e', 
-                    stroke: '#333',
+                  body: node.attrs && node.attrs.body ? node.attrs.body : {
+                    fill: 'none',
+                    stroke: '#bbb',
+                    rx: 12,
+                    ry: 12,
                   },
-                  label: { 
+                  label: node.attrs && node.attrs.label ? node.attrs.label : {
                     text: node.label,
-                    fill: '#000' 
+                    fill: '#000'
                   },
                 },
                 ports: portConfig,
@@ -124,9 +127,9 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
             overflow: 'hidden'
           }}
         >
-          <GraphCanvas key={schemaInfo?.schema_id || 'new'} graphRef={graphRef} mode={mode} />
+          <GraphCanvas key={schemaInfo?.schema_id} graphRef={graphRef} mode={mode} setSelectedNode={setSelectedNode} />
         </div>
-        <Sidebar nodes={nodes} />
+        <Sidebar nodes={nodes} selectedNode={selectedNode} setNodes={setNodes} graphRef={graphRef} />
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ class SaveSchemaView(APIView):
             height = cell.get("height", 0)
             label = cell.get("label", "") or ""  # label artık sadece string
             node_type = cell.get("type", "")
-
+            toml_id = cell.get("toml_id")
             node = Node.objects.create(
                 node_id=node_id,
                 label=label,
@@ -66,7 +66,8 @@ class SaveSchemaView(APIView):
                 width=width,
                 height=height,
                 schema=schema,
-                node_type=node_type
+                node_type=node_type,
+                toml_id=toml_id
             )
             nodes_map[node_id] = node
 
@@ -137,6 +138,7 @@ class SchemaDetailView(APIView):
                 "width": n.width,
                 "height": n.height,
                 "type": n.node_type,
+                "toml_id": n.toml_id,
             }
             for n in nodes
         ]
@@ -150,3 +152,26 @@ class SchemaDetailView(APIView):
             for e in edges
         ]
         return Response({"nodes": node_data, "edges": edge_data}, status=200)
+
+
+class NodeDetailByTomlIdView(APIView):
+    def get(self, request, toml_id):
+        try:
+            node = Node.objects.get(toml_id=toml_id)
+            node_data = {
+                "id": node.node_id,
+                "label": node.label,
+                "type": node.node_type,
+                "toml_id": node.toml_id,
+                "voltage": node.voltage,
+                "current": node.current,
+                "status": node.status,
+                "timestamp": node.timestamp,
+                "x": node.x,
+                "y": node.y,
+                "width": node.width,
+                "height": node.height,
+            }
+            return Response(node_data, status=status.HTTP_200_OK)
+        except Node.DoesNotExist:
+            return Response({"error": "Node not found"}, status=status.HTTP_404_NOT_FOUND)

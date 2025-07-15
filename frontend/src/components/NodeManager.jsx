@@ -91,9 +91,11 @@ export const createNodeConfig = (type) => {
     label: type, // Başlangıçta type ile aynı
     nodeType: type, // Type sabit kalacak
     attrs: {
-      body: { 
-        fill: type === 'ADP' ? '#a3d5ff' : '#ffd59e', 
-        stroke: '#333',
+      body: {
+        fill: 'none',
+        stroke: '#bbb',
+        rx: 12,
+        ry: 12,
       },
       label: { 
         text: type,

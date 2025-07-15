@@ -60,18 +60,19 @@
   display: flex;
   gap: 18px;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
 }
 .topbar-btn {
   background: #fff;
   color: #ff4d4f;
   border: 2px solid #ff4d4f;
-  border-radius: 8px;
-  padding: 10px 32px;
+  border-radius: 12px;
+  padding: 0 32px;
   font-size: 1.08rem;
   font-weight: 700;
-  min-width: 150px;
-  min-height: 44px;
+  min-width: 170px;
+  min-height: 48px;
+  height: 48px;
   box-shadow: 0 2px 8px rgba(255,77,79,0.08);
   cursor: pointer;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
@@ -81,10 +82,25 @@
   justify-content: center;
   text-align: center;
   letter-spacing: 0.2px;
+  margin: 0;
+  vertical-align: middle;
+  line-height: 48px;
 }
-.topbar-btn.active, .topbar-btn:hover {
+.topbar-btn.active {
   background: #f6f2f2;
-  color: #dd0e0e;
+  color: #ffb3b3;
+  border: 2px solid #ffd6d6;
+  box-shadow: none;
+  font-weight: 900;
+  filter: grayscale(0.2) brightness(1.08);
+}
+.topbar-btn:not(.active) {
+  background: #fff;
+  color: #ff4d4f;
+  border: 2px solid #ff4d4f;
+  box-shadow: 0 2px 8px rgba(255,77,79,0.08);
+  font-weight: 700;
+  filter: none;
 }
 
 .toolbar-modern {

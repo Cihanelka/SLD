@@ -23,7 +23,8 @@ export const saveSchema = async (graphRef, schemaInfo) => {
       height: size.height,
       label: labelText,
       type: nodeType,
-      attrs: node.getAttrs()
+      attrs: node.getAttrs(),
+      toml_id: (typeof node.getData === 'function' && node.getData() && node.getData().toml_id) ? node.getData().toml_id : ''
     });
   });
 
@@ -73,6 +74,20 @@ export const loadSchemaData = async (schemaId) => {
     return await response.json();
   } catch (error) {
     console.error('Backend hatası:', error);
+    throw error;
+  }
+};
+
+// TOML ID ile node detayını getir
+export const getNodeDetailByTomlId = async (tomlId) => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/node-detail/${tomlId}/`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Node detay hatası:', error);
     throw error;
   }
 }; 

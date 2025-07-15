@@ -11,6 +11,7 @@ class Schema(models.Model):
 from django.db import models
 
 class Node(models.Model):
+   
     schema = models.ForeignKey(Schema, related_name='nodes', on_delete=models.CASCADE)
     node_id = models.CharField(max_length=100, unique=True)
     label = models.CharField(max_length=200)  # cihaz adı gibi davranır
@@ -35,6 +36,7 @@ class Node(models.Model):
 
     # Opsiyonel: node tipi ekleyebilirsin (inverter, adp vs)
     node_type = models.CharField(max_length=50, blank=True)
+    toml_id = models.CharField(max_length=100, null=True, blank=True, help_text="TOML dosya ID")
 
     def __str__(self):
         return f"{self.label} ({self.node_id})"
