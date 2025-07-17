@@ -36,3 +36,4 @@ frontend/yarn-error.log*
 # IDE (Her iki taraf için)
 .vscode/
 .idea/
+backend/sld_project/__pycache__/__init__.cpython-311.pyc

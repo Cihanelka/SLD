@@ -9,13 +9,30 @@ import { getPortConfig } from './NodeManager';
 
 function SchemaEditor({ schemaInfo, onBackToSchemas }) {
   const graphRef = useRef(null);
+  const addEdgeRef = useRef(null); // Edge ekleme fonksiyonu için ref
   const [mode, setMode] = useState('edit');
   const [nodes, setNodes] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [realtimedata, setRealtimeData] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/realtime-data/')
+      .then(res => res.json())
+      .then(data => setRealtimeData(data.realtimedata || []));
+  }, []);
 
   // Node ekleme fonksiyonu
   const handleAddNode = (type) => {
     addNode(graphRef, type, setNodes);
+  };
+
+  // Edge ekleme fonksiyonu (ilk iki node'u bağla, demo amaçlı)
+  const handleAddEdge = () => {
+    if (nodes.length >= 2 && addEdgeRef.current) {
+      addEdgeRef.current(nodes[0].id, nodes[1].id);
+    } else {
+      alert('En az iki node ekleyin!');
+    }
   };
 
   // Şemayı kaydetme fonksiyonu
@@ -36,7 +53,7 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
             
             data.nodes.forEach(node => {
               const nodeType = node.type || node.label;
-              const portConfig = getPortConfig(nodeType);
+              // const portConfig = getPortConfig(nodeType);
 
               graphRef.current.addNode({
                 id: node.id,
@@ -58,7 +75,7 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
                     fill: '#000'
                   },
                 },
-                ports: portConfig,
+                // ports: portConfig, // BUNU KALDIR
               });
             });
             
@@ -114,7 +131,7 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
       />
 
       <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 120px)', overflow: 'hidden' }}>
-        {mode === 'edit' && <Toolbar onAddNode={handleAddNode} />}
+        {mode === 'edit' && <Toolbar onAddNode={handleAddNode} onAddEdge={handleAddEdge} />}
         <div
           style={{
             flex: 1,
@@ -127,9 +144,9 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
             overflow: 'hidden'
           }}
         >
-          <GraphCanvas key={schemaInfo?.schema_id} graphRef={graphRef} mode={mode} setSelectedNode={setSelectedNode} />
+          <GraphCanvas key={schemaInfo?.schema_id} graphRef={graphRef} mode={mode} setSelectedNode={setSelectedNode} onAddEdge={addEdgeRef} />
         </div>
-        <Sidebar nodes={nodes} selectedNode={selectedNode} setNodes={setNodes} graphRef={graphRef} />
+        <Sidebar nodes={nodes} selectedNode={selectedNode} setNodes={setNodes} graphRef={graphRef} realtimedata={realtimedata} />
       </div>
     </div>
   );

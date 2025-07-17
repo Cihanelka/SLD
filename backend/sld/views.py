@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from .models import Node, Edge, Schema
 from .serializers import NodeSerializer, EdgeSerializer
 import random
+from django.http import JsonResponse
 
 
 class NodeViewSet(viewsets.ModelViewSet):
@@ -175,3 +176,24 @@ class NodeDetailByTomlIdView(APIView):
             return Response(node_data, status=status.HTTP_200_OK)
         except Node.DoesNotExist:
             return Response({"error": "Node not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+def realtime_data(request):
+    data = {
+        "realtimedata": [
+            {
+                "id": "datalogger_id",
+                "name": "Datalogger1",
+                "devices": [
+                    {
+                        "toml_id": "toml_id_1",
+                        "name": "Schema Button",
+                        "data": {
+                            "status": True,
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+    return JsonResponse(data)

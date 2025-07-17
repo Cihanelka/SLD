@@ -1,87 +1,6 @@
-// Node tipine göre port konfigürasyonu
-export const getPortConfig = (type) => {
-  if (type === 'ADP') {
-    return {
-      groups: {
-        out: {
-          position: 'bottom',
-          attrs: {
-            circle: {
-              r: 4,
-              magnet: true,
-              stroke: '#5F95FF',
-              strokeWidth: 1,
-              fill: '#fff',
-            },
-          },
-        },
-      },
-      items: [
-        { group: 'out' },
-      ],
-    };
-  } else if (type === 'Inv') {
-    return {
-      groups: {
-        in: {
-          position: 'top',
-          attrs: {
-            circle: {
-              r: 4,
-              magnet: true,
-              stroke: '#5F95FF',
-              strokeWidth: 1,
-              fill: '#fff',
-            },
-          },
-        },
-      },
-      items: [
-        { group: 'in' },
-      ],
-    };
-  } else {
-    // Diğer node tipleri için varsayılan konfigürasyon
-    return {
-      groups: {
-        in: {
-          position: 'left',
-          attrs: {
-            circle: {
-              r: 4,
-              magnet: true,
-              stroke: '#5F95FF',
-              strokeWidth: 1,
-              fill: '#fff',
-            },
-          },
-        },
-        out: {
-          position: 'right',
-          attrs: {
-            circle: {
-              r: 4,
-              magnet: true,
-              stroke: '#5F95FF',
-              strokeWidth: 1,
-              fill: '#fff',
-            },
-          },
-        },
-      },
-      items: [
-        { group: 'in' },
-        { group: 'out' },
-      ],
-    };
-  }
-};
-
 // Node konfigürasyonu oluştur
 export const createNodeConfig = (type) => {
   const nodeId = `node-${Date.now()}`;
-  const portConfig = getPortConfig(type);
-  
   return {
     id: nodeId,
     x: type === 'ADP' ? 100 : 300,
@@ -96,13 +15,13 @@ export const createNodeConfig = (type) => {
         stroke: '#bbb',
         rx: 12,
         ry: 12,
+        magnet: true, // Bağlantı için gerekli!
       },
       label: { 
         text: type,
         fill: '#000' 
       },
     },
-    ports: portConfig,
   };
 };
 
