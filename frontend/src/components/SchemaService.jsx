@@ -11,7 +11,7 @@ export const saveSchema = async (graphRef, schemaInfo) => {
     console.log('node:', node);
     const position = node.getPosition();
     const size = node.getSize();
-    const labelText = node.getAttrByPath('label/text') || node.getProp('label') || '';
+    const labelText = node.getAttrByPath('label/text') || node.getProp('label') || node.getProp('type') || node.getAttrByPath('nodeType') || '';
     const nodeType = node.getProp('nodeType') || node.getAttrByPath('nodeType') || '';
 
     cells.push({
@@ -21,7 +21,7 @@ export const saveSchema = async (graphRef, schemaInfo) => {
       y: position.y,
       width: size.width,
       height: size.height,
-      label: labelText,
+      label: labelText || nodeType, // label boşsa type kullan
       type: nodeType,
       attrs: node.getAttrs(),
       toml_id: (typeof node.getData === 'function' && node.getData() && node.getData().toml_id) ? node.getData().toml_id : ''
@@ -31,14 +31,17 @@ export const saveSchema = async (graphRef, schemaInfo) => {
   edges.forEach(edge => {
     const source = edge.getSource();
     const target = edge.getTarget();
-    const labelText = edge.getAttrByPath('label/text') || '';
+    const labelText = edge.getAttrByPath('label/text') || edge.getProp && edge.getProp('type') || '';
+    const edgeType = edge.getProp && edge.getProp('type') || '';
 
     cells.push({
       id: edge.id,
       shape: 'edge',
       source: source.cell || source,
       target: target.cell || target,
-      label: { text: labelText },
+      label: labelText || edgeType, // label boşsa type kullan
+      router: { name: 'manhattan' }, // L çizgi
+      connector: { name: 'jumpover' }, // atlama efekti
       attrs: edge.getAttrs()
     });
   });

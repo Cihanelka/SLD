@@ -1,6 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import { Graph } from '@antv/x6';
+import { ReactShape } from '@antv/x6-react-shape';//GRAPHCANVAS
+import Busbar from './sld_nodes/Busbar';
+import ADP from './sld_nodes/ADP';
+import Inv from './sld_nodes/Inv';
+import Meter from './sld_nodes/Meter';
+import GearSettingsIcon from './GearSettingsIcon';
+import { Modal, Button, Input, Icon } from 'semantic-ui-react';
 
 // Orphan tool SVG'lerini DOM'dan temizle
 const cleanOrphanTools = () => {
@@ -13,31 +19,21 @@ const cleanOrphanTools = () => {
   });
 };
 
-export default function GraphCanvas({ graphRef, mode, setSelectedNode, onAddEdge }) {
+export default function GraphCanvas({ graphRef, mode, setSelectedNode, onAddEdge, nodes = [], setNodes }) {
   const [showModal, setShowModal] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newTomlId, setNewTomlId] = useState('');
   const [selectedNodeForEdit, setSelectedNodeForEdit] = useState(null);
 
-  const getInteractingConfig = (mode) => {
-    if (mode === 'edit') return true;
-
-    // 'user' modunda tüm etkileşimleri kapat
-    return {
-      nodeMovable: false,
-      edgeMovable: false,
-      edgeLabelMovable: false,
-      magnetConnectable: false,
-      arrowheadMovable: false,
-      vertexMovable: false,
-      useEdgeTools: false,
-    };
-  };
+  const getInteractingConfig = () => true;
 
   const handleUpdateLabel = () => {
     if (selectedNodeForEdit && newLabel.trim()) {
       selectedNodeForEdit.setAttrByPath('label/text', newLabel.trim());
       selectedNodeForEdit.setData && selectedNodeForEdit.setData({ ...selectedNodeForEdit.getData?.(), toml_id: newTomlId });
+      if (typeof setNodes === 'function') {
+        setNodes(prevNodes => prevNodes.map(n => n.id === selectedNodeForEdit.id ? { ...n, label: newLabel.trim(), toml_id: newTomlId } : n));
+      }
       setShowModal(false);
       setSelectedNodeForEdit(null);
       setNewLabel('');
@@ -53,25 +49,27 @@ export default function GraphCanvas({ graphRef, mode, setSelectedNode, onAddEdge
   };
 
   // İlk useEffect: Sadece ilk mount/unmount için
-  useEffect(() => {
+ useEffect(() => {
     if (!graphRef.current && document.getElementById('graph-container')) {
       graphRef.current = new Graph({
         container: document.getElementById('graph-container'),
         width: 800,
         height: 600,
         grid: true,
-        interacting: getInteractingConfig(mode),
+        interacting: getInteractingConfig(),
         translating: {
           restrict: true,
         },
         connecting: {
-          anchor: 'center', // node'un merkezinden
-          connectionPoint: 'boundary', // ama sınırına kadar uzat
+          allowNodeMove: true, // Node hareket edince edge'ler de hareket etsin
           allowBlank: false,
           allowLoop: false,
           highlight: true,
           snap: true,
           connector: 'normal', // düz çizgi (default)
+          allowNode: true,
+          allowEdge: true,
+          allowMulti: true,
           createEdge() {
             return graphRef.current.createEdge({
               shape: 'edge',
@@ -93,110 +91,20 @@ export default function GraphCanvas({ graphRef, mode, setSelectedNode, onAddEdge
               },
             });
           },
-          validateConnection({ sourceCell, targetCell, sourcePort, targetPort }) {
-            return sourceCell !== targetCell;
+          validateConnection({ sourceCell, targetCell }) {
+            // Edge'den edge'e bağlantıyı engelle
+            if (sourceCell && sourceCell.isEdge && sourceCell.isEdge()) return false;
+            if (targetCell && targetCell.isEdge && targetCell.isEdge()) return false;
+            return true;
           },
         },
       });
       // Node'lara settings butonu ekle
       graphRef.current.on('node:added', ({ node }) => {
-        cleanOrphanTools();
-        const type = node.getProp('nodeType') || node.getAttrByPath('nodeType') || node.getAttrByPath('type') || '';
-        const offset = type === 'Inv' ? { x: -6, y: -8 } : { x: -16, y: 2 };
-        node.removeTools();
-        node.addTools([
-          {
-            name: 'button',
-            args: {
-              x: '100%',
-              y: 0,
-              offset,
-              width: 20,
-              height: 20,
-              markup: [
-                {
-                  tagName: 'g',
-                  children: [
-                    {
-                      tagName: 'path',
-                      attrs: {
-                        d: 'M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7zm6.32-2.16l1.43 1.11a1 1 0 0 1 .24 1.32l-1.36 2.36a1 1 0 0 1-1.28.44l-1.67-.67a7.03 7.03 0 0 1-1.5.87l-.25 1.8a1 1 0 0 1-.99.86h-2.72a1 1 0 0 1-.99-.86l-.25-1.8a7.03 7.03 0 0 1-1.5-.87l-1.67.67a1 1 0 0 1-1.28-.44l-1.36-2.36a1 1 0 0 1 .24-1.32l1.43-1.11a7.07 7.07 0 0 1 0-1.74l-1.43-1.11a1 1 0 0 1-.24-1.32l1.36-2.36a1 1 0 0 1 1.28-.44l1.67.67c.47-.34.97-.63 1.5-.87l.25-1.8A1 1 0 0 1 11.28 2h2.72a1 1 0 0 1 .99.86l.25 1.8c.53.24 1.03.53 1.5.87l1.67-.67a1 1 0 0 1 1.28.44l1.36 2.36a1 1 0 0 1-.24 1.32l-1.43 1.11c.07.29.11.59.11.89s-.04.6-.11.89z',
-                        fill: 'none',
-                        stroke: '#ff4d4f',
-                        strokeWidth: 1.5,
-                        transform: 'scale(0.8)',
-                      },
-                    },
-                  ],
-                },
-              ],
-              onClick: () => {
-                const currentLabel = node.getAttrByPath('text/text') || node.getAttrByPath('label/text') || '';
-                const currentTomlId = node.getData?.()?.toml_id || '';
-                setSelectedNode({
-                  id: node.id,
-                  label: currentLabel,
-                  type: node.getProp('nodeType') || node.getAttrByPath('nodeType') || node.getAttrByPath('type') || '',
-                  ...node.getData?.() // varsa custom data
-                });
-                setSelectedNodeForEdit(node);
-                setNewLabel(currentLabel);
-                setNewTomlId(currentTomlId);
-                setShowModal(true);
-              },
-            },
-          },
-        ]);
+        addSettingsToolToNode(node);
       });
-      // node hareket edince tool'u tekrar ekle
       graphRef.current.on('node:moved', ({ node }) => {
-        cleanOrphanTools();
-        const type = node.getProp('nodeType') || node.getAttrByPath('nodeType') || node.getAttrByPath('type') || '';
-        const offset = type === 'Inv' ? { x: -6, y: -8 } : { x: -16, y: 2 };
-        node.removeTools();
-        node.addTools([
-          {
-            name: 'button',
-            args: {
-              x: '100%',
-              y: 0,
-              offset,
-              width: 20,
-              height: 20,
-              markup: [
-                {
-                  tagName: 'g',
-                  children: [
-                    {
-                      tagName: 'path',
-                      attrs: {
-                        d: 'M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7zm6.32-2.16l1.43 1.11a1 1 0 0 1 .24 1.32l-1.36 2.36a1 1 0 0 1-1.28.44l-1.67-.67a7.03 7.03 0 0 1-1.5.87l-.25 1.8a1 1 0 0 1-.99.86h-2.72a1 1 0 0 1-.99-.86l-.25-1.8a7.03 7.03 0 0 1-1.5-.87l-1.67.67a1 1 0 0 1-1.28-.44l-1.36-2.36a1 1 0 0 1 .24-1.32l1.43-1.11a7.07 7.07 0 0 1 0-1.74l-1.43-1.11a1 1 0 0 1-.24-1.32l1.36-2.36a1 1 0 0 1 1.28-.44l1.67.67c.47-.34.97-.63 1.5-.87l.25-1.8A1 1 0 0 1 11.28 2h2.72a1 1 0 0 1 .99.86l.25 1.8c.53.24 1.03.53 1.5.87l1.67-.67a1 1 0 0 1 1.28.44l1.36 2.36a1 1 0 0 1-.24 1.32l-1.43 1.11c.07.29.11.59.11.89s-.04.6-.11.89z',
-                        fill: 'none',
-                        stroke: '#ff4d4f',
-                        strokeWidth: 1.5,
-                        transform: 'scale(0.8)',
-                      },
-                    },
-                  ],
-                },
-              ],
-              onClick: () => {
-                const currentLabel = node.getAttrByPath('text/text') || node.getAttrByPath('label/text') || '';
-                const currentTomlId = node.getData?.()?.toml_id || '';
-                setSelectedNode({
-                  id: node.id,
-                  label: currentLabel,
-                  type: node.getProp('nodeType') || node.getAttrByPath('nodeType') || node.getAttrByPath('type') || '',
-                  ...node.getData?.() // varsa custom data
-                });
-                setSelectedNodeForEdit(node);
-                setNewLabel(currentLabel);
-                setNewTomlId(currentTomlId);
-                setShowModal(true);
-              },
-            },
-          },
-        ]);
+        addSettingsToolToNode(node);
       });
     }
     return () => {
@@ -210,7 +118,7 @@ export default function GraphCanvas({ graphRef, mode, setSelectedNode, onAddEdge
   // İkinci useEffect: Mode değişiminde sadece interacting güncelle
   useEffect(() => {
     if (graphRef.current) {
-      graphRef.current.options.interacting = getInteractingConfig(mode);
+      graphRef.current.options.interacting = getInteractingConfig();
     }
   }, [mode, graphRef]);
 
@@ -231,57 +139,56 @@ export default function GraphCanvas({ graphRef, mode, setSelectedNode, onAddEdge
     };
   }, [graphRef, setSelectedNode]);
 
-  // Kenardan kenara L şeklinde edge ekle
+  const anchorNames = ['top', 'right', 'bottom', 'left'];
+  const getRandomAnchor = () => anchorNames[Math.floor(Math.random() * 4)];
+
+  const getRandomBoundaryAnchor = (size) => {
+    const edge = Math.floor(Math.random() * 4);
+    let args = {};
+    switch (edge) {
+      case 0: // üst
+        args = { x: Math.random() * size.width, y: 0 };
+        break;
+      case 1: // sağ
+        args = { x: size.width, y: Math.random() * size.height };
+        break;
+      case 2: // alt
+        args = { x: Math.random() * size.width, y: size.height };
+        break;
+      case 3: // sol
+        args = { x: 0, y: Math.random() * size.height };
+        break;
+      default:
+        args = { x: 0, y: 0 };
+    }
+    return { name: 'boundary', args };
+  };
+
   const addEdgeBetweenNodes = (sourceId, targetId) => {
     if (!graphRef.current) return;
-    
+
     const sourceNode = graphRef.current.getCellById(sourceId);
     const targetNode = graphRef.current.getCellById(targetId);
-    
     if (!sourceNode || !targetNode) return;
-    
-    const sourcePos = sourceNode.getPosition();
-    const targetPos = targetNode.getPosition();
-    const sourceSize = sourceNode.getSize();
-    const targetSize = targetNode.getSize();
-    
-    // Source'un sağ kenarı
-    const sourcePoint = {
-      x: sourcePos.x + sourceSize.width,
-      y: sourcePos.y + sourceSize.height / 2
-    };
-    
-    // Target'ın sol kenarı
-    const targetPoint = {
-      x: targetPos.x,
-      y: targetPos.y + targetSize.height / 2
-    };
-    
-    // L şekli için ara nokta: source'un x'i, target'ın y'si
-    const middlePoint = {
-      x: targetPoint.x,
-      y: sourcePoint.y
-    };
-    
+    // Magnet kontrolü
+    const sourceMagnet = sourceNode.view && sourceNode.view.container && sourceNode.view.container.getAttribute('data-magnet');
+    const targetMagnet = targetNode.view && targetNode.view.container && targetNode.view.container.getAttribute('data-magnet');
+    if (sourceMagnet !== 'true' || targetMagnet !== 'true') {
+      alert('Edge eklenemiyor: Node bileşenlerinde data-magnet="true" olmalı!');
+      return;
+    }
+
     graphRef.current.addEdge({
-      source: { cell: sourceId },
-      target: { cell: targetId },
-      vertices: [middlePoint], // Ara nokta ekle
-      attrs: {
-        line: {
-          stroke: '#ff0000',
-          strokeWidth: 2,
-          strokeDasharray: '5 5',
-          targetMarker: {
-            name: 'classic',
-            size: 6,
-            fill: '#ff0000',
-            stroke: '#ff0000',
-          },
-          style: {
-            animation: 'dash-animation 1s linear infinite',
-          },
-        },
+      shape: 'custom-edge',
+      source: {
+        cell: sourceId,
+        anchor: 'center',
+        connectionPoint: 'boundary',
+      },
+      target: {
+        cell: targetId,
+        anchor: 'center',
+        connectionPoint: 'boundary',
       },
     });
   };
@@ -296,112 +203,122 @@ export default function GraphCanvas({ graphRef, mode, setSelectedNode, onAddEdge
   // Graph'ı temizlemek istediğin yerde artık clearCells kullan
   // Örnek: graphRef.current.clearCells();
 
+  // Tool ekleme fonksiyonu
+  const addSettingsToolToNode = (node) => {
+    cleanOrphanTools();
+    const type = node.getProp('nodeType') || node.getAttrByPath('nodeType') || node.getAttrByPath('type') || '';
+    const offset = type === 'Inv' ? { x: -6, y: -8 } : { x: -16, y: 2 };
+    node.removeTools();
+    const size = node.getSize ? node.getSize() : { width: 80, height: 40 };
+    const btnSize = Math.max(12, Math.min(14, Math.round(size.width * 0.09)));
+    const cx = Math.round(btnSize / 2);
+    const cy = Math.round(btnSize / 2);
+    const offsetX = -btnSize - 2;
+    const offsetY = 4;
+    const gearR = btnSize * 0.32;
+    const gearLines = Array.from({length:6}).map((_,i)=>{
+      const angle = (Math.PI*2/6)*i;
+      const x1 = cx + Math.cos(angle)*gearR*0.7;
+      const y1 = cy + Math.sin(angle)*gearR*0.7;
+      const x2 = cx + Math.cos(angle)*gearR*1.1;
+      const y2 = cy + Math.sin(angle)*gearR*1.1;
+      return {tagName:'line',attrs:{x1,y1,x2,y2,stroke:'#fff',strokeWidth:1.1,strokeLinecap:'round'}};
+    });
+    node.addTools([
+      {
+        name: 'button',
+        args: {
+          x: '100%',
+          y: 0,
+          offset: { x: offsetX, y: offsetY },
+          width: btnSize,
+          height: btnSize,
+          markup: [
+            {
+              tagName: 'circle',
+              attrs: {
+                cx,
+                cy,
+                r: btnSize / 2,
+                fill: '#ff4d4f',
+                stroke: 'none',
+              },
+            },
+            {
+              tagName: 'circle',
+              attrs: {
+                cx,
+                cy,
+                r: gearR,
+                stroke: '#fff',
+                strokeWidth: 1.1,
+                fill: 'none',
+              },
+            },
+            ...gearLines,
+          ],
+          onClick: () => {
+            const currentLabel = node.getAttrByPath('text/text') || node.getAttrByPath('label/text') || '';
+            const currentTomlId = node.getData?.()?.toml_id || '';
+            setSelectedNode({
+              id: node.id,
+              label: currentLabel,
+              type: node.getProp('nodeType') || node.getAttrByPath('nodeType') || node.getAttrByPath('type') || '',
+              ...node.getData?.()
+            });
+            setSelectedNodeForEdit(node);
+            setNewLabel(currentLabel);
+            setNewTomlId(currentTomlId);
+            setShowModal(true);
+          },
+        },
+      },
+    ]);
+  };
+
   return (
     <>
-      <style>
-        {`
-          @keyframes dash-animation {
-            to {
-              stroke-dashoffset: -10px;
-            }
+      <style>{`
+        @keyframes dash-animation {
+          to {
+            stroke-dashoffset: -10px;
           }
-        `}
-      </style>
+        }
+      `}</style>
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '12px',
-            minWidth: '320px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#333', fontSize: '18px' }}>
-              Node İsmi Değiştir
-            </h3>
-            <input
-              type="text"
+        <Modal open={showModal} onClose={handleCloseModal} size="tiny" closeIcon>
+          <Modal.Header>
+            <Icon name="settings" /> Node Ayarları
+          </Modal.Header>
+          <Modal.Content>
+            <Input
+              fluid
+              label="Label"
               value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleUpdateLabel();
-                }
-              }}
+              onChange={e => setNewLabel(e.target.value)}
+              onKeyPress={e => { if (e.key === 'Enter') handleUpdateLabel(); }}
               placeholder="Yeni isim girin..."
-              style={{
-                width: '100%',
-                padding: '12px',
-                margin: '0 0 16px 0',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}
+              style={{ marginBottom: 16 }}
               autoFocus
             />
-            <input
-              type="text"
+            <Input
+              fluid
+              label="TOML ID"
               value={newTomlId}
-              onChange={(e) => setNewTomlId(e.target.value)}
+              onChange={e => setNewTomlId(e.target.value)}
               placeholder="TOML ID girin..."
-              style={{
-                width: '100%',
-                padding: '12px',
-                margin: '0 0 16px 0',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}
+              style={{ marginBottom: 16 }}
             />
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={handleCloseModal}
-                style={{
-                  padding: '10px 20px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  background: '#f8f9fa',
-                  color: '#333',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                İptal
-              </button>
-              <button
-                onClick={handleUpdateLabel}
-                style={{
-                  padding: '10px 20px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  background: '#007bff',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                Kaydet
-              </button>
-            </div>
-          </div>
-        </div>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button onClick={handleCloseModal} color="grey">İptal</Button>
+            <Button onClick={handleUpdateLabel} color="red">Kaydet</Button>
+          </Modal.Actions>
+        </Modal>
       )}
       <div
         id="graph-container"
-        style={{ width: 800, height: 600, border: '1px solid #ccc', background: '#fff' }}
+        style={{ width: 1200, height: 900, border: '1px solid #ccc', background: '#fff', position: 'relative' }}
       />
     </>
   );

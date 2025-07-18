@@ -11,7 +11,12 @@ export default function Toolbar({ onAddNode, onAddEdge }) {
         <button className="toolbar-btn invertor toolbar-red-text" onClick={() => onAddNode('Inv')}>
           Inv Node Ekle
         </button>
-       
+        <button className="toolbar-btn busbar toolbar-red-text" onClick={() => onAddNode('Busbar')}>
+          Busbar Node Ekle
+        </button>
+        <button className="toolbar-btn meter toolbar-red-text" onClick={() => onAddNode('Meter')}>
+          Meter Ekle
+        </button>
       </div>
     </aside>
   );

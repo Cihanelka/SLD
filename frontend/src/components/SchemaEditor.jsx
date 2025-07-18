@@ -3,15 +3,15 @@ import Topbar from './TopBar';
 import Sidebar from './SideBar';
 import Toolbar from './ToolBar';
 import GraphCanvas from './GraphCanvas';
-import { addNode } from './NodeManager';
+import { addNode, createNodeConfig } from './nodeUtils'; 
 import { saveSchema, loadSchemaData } from './SchemaService';
-import { getPortConfig } from './NodeManager';
 
 function SchemaEditor({ schemaInfo, onBackToSchemas }) {
   const graphRef = useRef(null);
-  const addEdgeRef = useRef(null); // Edge ekleme fonksiyonu için ref
+  const addEdgeRef = useRef(null);
   const [mode, setMode] = useState('edit');
   const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [realtimedata, setRealtimeData] = useState([]);
 
@@ -21,12 +21,10 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
       .then(data => setRealtimeData(data.realtimedata || []));
   }, []);
 
-  // Node ekleme fonksiyonu
   const handleAddNode = (type) => {
     addNode(graphRef, type, setNodes);
   };
 
-  // Edge ekleme fonksiyonu (ilk iki node'u bağla, demo amaçlı)
   const handleAddEdge = () => {
     if (nodes.length >= 2 && addEdgeRef.current) {
       addEdgeRef.current(nodes[0].id, nodes[1].id);
@@ -35,12 +33,10 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
     }
   };
 
-  // Şemayı kaydetme fonksiyonu
   const handleSave = async () => {
     await saveSchema(graphRef, schemaInfo);
   };
 
-  // Şema seçildiğinde node ve edge verilerini yükle
   useEffect(() => {
     if (!schemaInfo) return;
 
@@ -50,39 +46,38 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
           try {
             const data = await loadSchemaData(schemaInfo.schema_id);
             graphRef.current.clearCells();
-            
-            data.nodes.forEach(node => {
-              const nodeType = node.type || node.label;
-              // const portConfig = getPortConfig(nodeType);
+            setNodes([]);
+            setEdges([]);
 
-              graphRef.current.addNode({
+            data.nodes.forEach(node => {
+              const nodeType = node.type || node.label || 'rect';
+              // Backend'den gelen node ile createNodeConfig'un birleşimi
+              const defaultConfig = createNodeConfig(nodeType);
+
+              const mergedNodeConfig = {
+                ...defaultConfig,
                 id: node.id,
                 x: node.x,
                 y: node.y,
-                width: node.width,
-                height: node.height,
-                label: node.label,
-                nodeType: nodeType, // Type sabit kalacak
-                attrs: {
-                  body: node.attrs && node.attrs.body ? node.attrs.body : {
-                    fill: 'none',
-                    stroke: '#bbb',
-                    rx: 12,
-                    ry: 12,
-                  },
-                  label: node.attrs && node.attrs.label ? node.attrs.label : {
-                    text: node.label,
-                    fill: '#000'
-                  },
-                },
-                // ports: portConfig, // BUNU KALDIR
-              });
+                width: node.width || defaultConfig.width,
+                height: node.height || defaultConfig.height,
+                data: { ...defaultConfig.data, label: (node.label || nodeType), type: nodeType },
+                attrs: node.attrs || defaultConfig.attrs,
+              };
+
+              graphRef.current.addNode(mergedNodeConfig);
             });
-            
+
             data.edges.forEach(edge => {
-              graphRef.current.addEdge({ 
-                ...edge, 
+              graphRef.current.addEdge({
+                ...edge,
                 shape: 'edge',
+                source: typeof edge.source === 'string' ? { cell: edge.source, anchor: 'center', connectionPoint: 'boundary' } : edge.source,
+                target: typeof edge.target === 'string' ? { cell: edge.target, anchor: 'center', connectionPoint: 'boundary' } : edge.target,
+                label: edge.label || edge.type || '', // label yoksa type kullan
+                router: { name: 'manhattan' },
+                connector: { name: 'jumpover' },
+                connectionPoint: 'rect',
                 attrs: {
                   line: {
                     stroke: '#ff0000',
@@ -101,16 +96,19 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
                 },
               });
             });
-            
+
             setNodes(data.nodes);
+            setEdges(data.edges);
           } catch (error) {
             console.error('Backend hatası:', error);
-            if (graphRef.current) graphRef.current.clearCells();
+            graphRef.current.clearCells();
             setNodes([]);
+            setEdges([]);
           }
         } else {
           graphRef.current.clearCells();
           setNodes([]);
+          setEdges([]);
         }
       } else {
         setTimeout(loadData, 100);
@@ -144,12 +142,27 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
             overflow: 'hidden'
           }}
         >
-          <GraphCanvas key={schemaInfo?.schema_id} graphRef={graphRef} mode={mode} setSelectedNode={setSelectedNode} onAddEdge={addEdgeRef} />
+          <GraphCanvas
+            key={schemaInfo?.schema_id}
+            graphRef={graphRef}
+            mode={mode}
+            setSelectedNode={setSelectedNode}
+            onAddEdge={addEdgeRef}
+            nodes={nodes}
+            edges={edges}
+            setNodes={setNodes}
+          />
         </div>
-        <Sidebar nodes={nodes} selectedNode={selectedNode} setNodes={setNodes} graphRef={graphRef} realtimedata={realtimedata} />
+        <Sidebar
+          nodes={nodes}
+          selectedNode={selectedNode}
+          setNodes={setNodes}
+          graphRef={graphRef}
+          realtimedata={realtimedata}
+        />
       </div>
     </div>
   );
 }
 
-export default SchemaEditor; 
+export default SchemaEditor;
