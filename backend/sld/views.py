@@ -46,7 +46,7 @@ class SaveSchemaView(APIView):
         cells = data.get("cells", [])
         nodes_map = {}
 
-        # Node'ları kaydet
+        # Node'ları kaydet (ilk turda parent olmadan)
         for cell in cells:
             if cell.get("shape") == "edge":
                 continue
@@ -69,8 +69,22 @@ class SaveSchemaView(APIView):
                 schema=schema,
                 node_type=node_type,
                 toml_id=toml_id
+                # parent şimdilik yok
             )
             nodes_map[node_id] = node
+
+        # Parent ilişkilerini kur (ikinci tur)
+        for cell in cells:
+            if cell.get("shape") == "edge":
+                continue
+            node_id = cell.get("id")
+            parent_id = cell.get("parent")
+            if parent_id:
+                node = nodes_map.get(node_id)
+                parent = nodes_map.get(parent_id)
+                if node and parent:
+                    node.parent = parent
+                    node.save()
 
         # Edge'leri kaydet
         for cell in cells:
@@ -140,6 +154,7 @@ class SchemaDetailView(APIView):
                 "height": n.height,
                 "type": n.node_type,
                 "toml_id": n.toml_id,
+                "parent": n.parent.node_id if n.parent else None,
             }
             for n in nodes
         ]
@@ -176,6 +191,30 @@ class NodeDetailByTomlIdView(APIView):
             return Response(node_data, status=status.HTTP_200_OK)
         except Node.DoesNotExist:
             return Response({"error": "Node not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class NodePKByNodeIdView(APIView):
+    def get(self, request, node_id):
+        try:
+            node = Node.objects.get(node_id=node_id)
+            return Response({'id': node.id})
+        except Node.DoesNotExist:
+            return Response({'error': 'Node not found'}, status=404)
+
+
+class NodeUpdateByNodeIdView(APIView):
+    def put(self, request, node_id):
+        print('GELEN NODE_ID:', node_id)
+        print('REQUEST DATA:', request.data)
+        try:
+            node = Node.objects.get(node_id=node_id)
+        except Node.DoesNotExist:
+            return Response({'error': 'Node not found'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = NodeSerializer(node, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def realtime_data(request):

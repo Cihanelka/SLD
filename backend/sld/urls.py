@@ -3,6 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import NodeViewSet, EdgeViewSet
 from .views import SaveSchemaView, CreateSchemaView, ListSchemasView, SchemaDetailView, NodeDetailByTomlIdView
 from .views import realtime_data
+from .views import NodePKByNodeIdView
+from .views import NodeUpdateByNodeIdView
 
 
 router = DefaultRouter()
@@ -19,4 +21,10 @@ urlpatterns = [
 ]
 urlpatterns += [
     path('api/realtime-data/', realtime_data),
+]
+urlpatterns += [
+    path('node-pk/<str:node_id>/', NodePKByNodeIdView.as_view(), name='node-pk-by-node-id'),
+]
+urlpatterns += [
+    path('nodes-by-nodeid/<str:node_id>/', NodeUpdateByNodeIdView.as_view(), name='node-update-by-nodeid'),
 ]

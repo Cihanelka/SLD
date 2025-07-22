@@ -4,6 +4,29 @@ function SchemaSelector({ schemas, onSchemaSelect, onCreateSchema }) {
   const [showModal, setShowModal] = useState(false);
   const [schemaName, setSchemaName] = useState('');
 
+  const handleSchemaSelect = (schema) => {
+    onSchemaSelect(schema);
+  };
+
+  const handleCreateSchema = () => {
+    onCreateSchema(schemaName);
+    setShowModal(false);
+    setSchemaName('');
+  };
+
+  const handleModalOpen = () => {
+    setShowModal(true);
+    setSchemaName('');
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+  };
+
+  const handleSchemaNameChange = (e) => {
+    setSchemaName(e.target.value);
+  };
+
   return (
     <div style={{ 
       height: '100vh', 
@@ -45,7 +68,7 @@ function SchemaSelector({ schemas, onSchemaSelect, onCreateSchema }) {
                 e.target.style.background = '#fff';
                 e.target.style.color = '#1976d2';
               }}
-              onClick={() => onSchemaSelect(s)}
+              onClick={() => handleSchemaSelect(s)}
             >
               {s.name}
             </button>
@@ -70,10 +93,7 @@ function SchemaSelector({ schemas, onSchemaSelect, onCreateSchema }) {
               e.target.style.background = '#1976d2';
               e.target.style.borderColor = '#1976d2';
             }}
-            onClick={() => {
-              setShowModal(true);
-              setSchemaName('');
-            }}
+            onClick={handleModalOpen}
           >
             + Yeni Şema Oluştur
           </button>
@@ -108,14 +128,11 @@ function SchemaSelector({ schemas, onSchemaSelect, onCreateSchema }) {
                 type="text"
                 placeholder="Şema Adı"
                 value={schemaName}
-                onChange={e => setSchemaName(e.target.value)}
+                onChange={handleSchemaNameChange}
                 style={{ width: '100%', marginBottom: 12, padding: 8 }}
               />
               <button
-                onClick={() => {
-                  onCreateSchema(schemaName);
-                  setShowModal(false);
-                }}
+                onClick={handleCreateSchema}
                 disabled={!schemaName}
                 style={{
                   width: '100%',
@@ -128,6 +145,21 @@ function SchemaSelector({ schemas, onSchemaSelect, onCreateSchema }) {
                 }}
               >
                 Oluştur
+              </button>
+              <button
+                onClick={handleModalClose}
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  background: '#f44336',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  fontWeight: 'bold',
+                  marginTop: 10
+                }}
+              >
+                Kapat
               </button>
             </div>
           </div>

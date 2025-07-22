@@ -5,7 +5,9 @@ import Toolbar from './ToolBar';
 import GraphCanvas from './GraphCanvas';
 import { addNode, createNodeConfig } from './nodeUtils'; 
 import { saveSchema, loadSchemaData } from './SchemaService';
+import { createEdgeConfig } from './sld_nodes/Edge';
 
+// Şema editörü ana bileşeni, graph ve node yönetimini yapar
 function SchemaEditor({ schemaInfo, onBackToSchemas }) {
   const graphRef = useRef(null);
   const addEdgeRef = useRef(null);
@@ -14,6 +16,8 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
   const [edges, setEdges] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [realtimedata, setRealtimeData] = useState([]);
+  const [isDirty, setIsDirty] = useState(false);
+  const [suppressDirty, setSuppressDirty] = useState(false);
 
   useEffect(() => {
     fetch('/api/realtime-data/')
@@ -21,26 +25,31 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
       .then(data => setRealtimeData(data.realtimedata || []));
   }, []);
 
+  // Yeni node ekler
   const handleAddNode = (type) => {
     addNode(graphRef, type, setNodes);
   };
 
-  const handleAddEdge = () => {
-    if (nodes.length >= 2 && addEdgeRef.current) {
-      addEdgeRef.current(nodes[0].id, nodes[1].id);
-    } else {
-      alert('En az iki node ekleyin!');
-    }
+  // Edge ile ilgili işlemler sadece Edge.jsx fonksiyonlarından çağrılacak.
+
+  // Graph değiştiğinde dirty flag'i günceller
+  const handleGraphChange = () => {
+    if (!suppressDirty) setIsDirty(true);
   };
 
+  // Şemayı kaydeder
   const handleSave = async () => {
+    setSuppressDirty(true);
     await saveSchema(graphRef, schemaInfo);
+    setSuppressDirty(false);
+    setIsDirty(false);
   };
 
   useEffect(() => {
     if (!schemaInfo) return;
 
     const loadData = async () => {
+      setSuppressDirty(true);
       if (graphRef.current) {
         if (schemaInfo.schema_id && schemaInfo.schema_id > 0) {
           try {
@@ -68,55 +77,45 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
               graphRef.current.addNode(mergedNodeConfig);
             });
 
-            data.edges.forEach(edge => {
-              graphRef.current.addEdge({
-                ...edge,
-                shape: 'edge',
-                source: typeof edge.source === 'string' ? { cell: edge.source, anchor: 'center', connectionPoint: 'boundary' } : edge.source,
-                target: typeof edge.target === 'string' ? { cell: edge.target, anchor: 'center', connectionPoint: 'boundary' } : edge.target,
-                label: edge.label || edge.type || '', // label yoksa type kullan
-                router: { name: 'manhattan' },
-                connector: { name: 'jumpover' },
-                connectionPoint: 'rect',
-                attrs: {
-                  line: {
-                    stroke: '#ff0000',
-                    strokeWidth: 2,
-                    strokeDasharray: '5 5',
-                    targetMarker: {
-                      name: 'classic',
-                      size: 6,
-                      fill: '#ff0000',
-                      stroke: '#ff0000',
-                    },
-                    style: {
-                      animation: 'dash-animation 1s linear infinite',
-                    },
-                  },
-                },
+            // Parent-child embed ilişkisini tekrar kur
+            if (data.nodes.some(n => n.parent)) {
+              data.nodes.forEach(node => {
+                if (node.parent) {
+                  const parent = graphRef.current.getCellById(node.parent);
+                  const child = graphRef.current.getCellById(node.id);
+                  if (parent && child) parent.embed(child);
+                }
               });
+            }
+
+            data.edges.forEach(edge => {
+              graphRef.current.addEdge(createEdgeConfig(edge, graphRef.current));
             });
 
             setNodes(data.nodes);
             setEdges(data.edges);
+            setIsDirty(false);
           } catch (error) {
             console.error('Backend hatası:', error);
             graphRef.current.clearCells();
             setNodes([]);
             setEdges([]);
+            setIsDirty(false);
           }
         } else {
           graphRef.current.clearCells();
           setNodes([]);
           setEdges([]);
+          setIsDirty(false);
         }
       } else {
         setTimeout(loadData, 100);
       }
+      setSuppressDirty(false);
     };
 
     loadData();
-  }, [schemaInfo]);
+  }, [schemaInfo]); // Sadece schemaInfo değişince çalışsın
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -126,10 +125,11 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
         onModeChange={setMode}
         onSave={handleSave}
         onChangeSchema={onBackToSchemas}
+        canSave={isDirty}
       />
 
       <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 120px)', overflow: 'hidden' }}>
-        {mode === 'edit' && <Toolbar onAddNode={handleAddNode} onAddEdge={handleAddEdge} />}
+        {mode === 'edit' && <Toolbar onAddNode={handleAddNode} onAddEdge={addEdgeRef} />}
         <div
           style={{
             flex: 1,
@@ -151,6 +151,7 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
             nodes={nodes}
             edges={edges}
             setNodes={setNodes}
+            onGraphChange={handleGraphChange}
           />
         </div>
         <Sidebar

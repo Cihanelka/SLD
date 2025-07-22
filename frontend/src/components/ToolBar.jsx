@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Node ve edge ekleme butonlarını içeren toolbar bileşeni
 export default function Toolbar({ onAddNode, onAddEdge }) {
   return (
     <aside className="toolbar toolbar-modern">

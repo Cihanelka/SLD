@@ -20,6 +20,9 @@ class Node(models.Model):
     width = models.FloatField()
     height = models.FloatField()
 
+    # Parent-child embed ilişkisi
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.SET_NULL)
+
     # Ortak teknik özellikler
     voltage = models.FloatField(null=True, blank=True, help_text="Gerilim (V)")
     current = models.FloatField(null=True, blank=True, help_text="Akım (A)")

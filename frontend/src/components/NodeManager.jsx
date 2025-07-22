@@ -11,6 +11,7 @@ import Meter from './sld_nodes/Meter';
 // Burada da nodeUtils.js'deki createNodeConfig'u kullanmak daha iyi olur, ama istersen tekrar yazabilirsin
 import { createNodeConfig } from './nodeUtils';
 
+// Node ekleme ve yönetimi için demo bileşen
 const NodeManager = () => {
   const containerRef = useRef(null);
   const graphRef = useRef(null);
@@ -23,14 +24,15 @@ const NodeManager = () => {
       height: 600,
       grid: true,
       connecting: {
-        router: 'orth',
+        router: 'manhattan',
         connector: 'rounded',
         anchor: 'center',
-        connectionPoint: 'anchor',
+        connectionPoint: 'boundary',
       },
     });
   }, []);
 
+  // Yeni node ekler
   const handleAddNode = (type) => {
     if (!graphRef.current) return;
     const config = createNodeConfig(type);

@@ -1,4 +1,5 @@
-// Şemayı kaydetme
+import { createEdge, removeEdge, updateEdge } from './sld_nodes/Edge';
+// Graph'ı backend'e kaydeder
 export const saveSchema = async (graphRef, schemaInfo) => {
   if (!graphRef.current) return;
 
@@ -8,11 +9,16 @@ export const saveSchema = async (graphRef, schemaInfo) => {
   const cells = [];
 
   nodes.forEach(node => {
-    console.log('node:', node);
     const position = node.getPosition();
     const size = node.getSize();
     const labelText = node.getAttrByPath('label/text') || node.getProp('label') || node.getProp('type') || node.getAttrByPath('nodeType') || '';
     const nodeType = node.getProp('nodeType') || node.getAttrByPath('nodeType') || '';
+    // Parent id'yi al
+    let parentId = null;
+    if (typeof node.getParent === 'function') {
+      const parent = node.getParent();
+      if (parent) parentId = parent.id;
+    }
 
     cells.push({
       id: node.id,
@@ -24,7 +30,8 @@ export const saveSchema = async (graphRef, schemaInfo) => {
       label: labelText || nodeType, // label boşsa type kullan
       type: nodeType,
       attrs: node.getAttrs(),
-      toml_id: (typeof node.getData === 'function' && node.getData() && node.getData().toml_id) ? node.getData().toml_id : ''
+      toml_id: (typeof node.getData === 'function' && node.getData() && node.getData().toml_id) ? node.getData().toml_id : '',
+      parent: parentId // <-- parent id'yi ekle
     });
   });
 
@@ -47,7 +54,6 @@ export const saveSchema = async (graphRef, schemaInfo) => {
   });
 
   const graphData = { cells };
-  console.log(JSON.stringify(graphData, null, 2));
 
   try {
     const response = await fetch('http://localhost:8000/api/save-schema/', {
@@ -70,7 +76,7 @@ export const saveSchema = async (graphRef, schemaInfo) => {
   }
 };
 
-// Şema verilerini yükle
+// Backend'den şema verilerini yükler
 export const loadSchemaData = async (schemaId) => {
   try {
     const response = await fetch(`http://localhost:8000/api/schema-detail/${schemaId}/`);
@@ -81,7 +87,7 @@ export const loadSchemaData = async (schemaId) => {
   }
 };
 
-// TOML ID ile node detayını getir
+// TOML ID ile node detayını getirir
 export const getNodeDetailByTomlId = async (tomlId) => {
   try {
     const response = await fetch(`http://localhost:8000/api/node-detail/${tomlId}/`);

@@ -41,6 +41,15 @@
 .topbar-btn.save:hover {
   background: #efebeb;
 }
+.topbar-btn.save.save-disabled {
+  background: #f3f3f3 !important;
+  color: #bbb !important;
+  border: 2px solid #eee !important;
+  filter: grayscale(0.7) blur(0.5px) brightness(1.05);
+  box-shadow: 0 2px 12px 2px #bbb4;
+  cursor: not-allowed !important;
+  opacity: 0.85;
+}
 
 .topbar-red {
   background: #ff4d4f !important;
@@ -183,4 +192,14 @@
 .sidebar li {
   font-size: 1.05rem;
   margin-bottom: 8px;
+}
+@keyframes dash-animation {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+.x6-edge-path {
+  /* X6'nın edge path'ine animasyon uygula */
+  animation: dash-animation 1s linear infinite;
 }

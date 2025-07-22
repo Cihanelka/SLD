@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Node listesini ve seçili node'u gösteren sidebar bileşeni
 export default function Sidebar({ nodes, selectedNode, setNodes, mode, graphRef, realtimedata }) {
   const nodeList = nodes || [];
   let matchedDevice = null;
@@ -12,7 +13,7 @@ export default function Sidebar({ nodes, selectedNode, setNodes, mode, graphRef,
   return (
     <div className="sidebar sidebar-modern">
       <h3 className="sidebar-title">Node Listesi {mode === 'edit' && '(Edit Modu)'}</h3>
-      {selectedNode ? (
+      {selectedNode && mode !== 'user' ? (
         <div style={{marginBottom: 24}}>
           <h4>Seçili Node</h4>
           <div><b>ID:</b> {selectedNode.id}</div>

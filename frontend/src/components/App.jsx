@@ -4,6 +4,7 @@ import SchemaSelector from './SchemaSelector';
 import SchemaEditor from './SchemaEditor';
 import './App.css';
 
+// Ana uygulama bileşeni, routing ve şema yönetimini yapar
 function App() {
   const [schemas, setSchemas] = useState([]);
   const [selectedSchema, setSelectedSchema] = useState(null);

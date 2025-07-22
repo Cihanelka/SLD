@@ -11,3 +11,10 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* X6 node ve selection layer'larında move cursor'u engelle */
+.x6-widget-selection-box,
+.x6-widget-transform,
+.x6-node * {
+  cursor: default !important;
+}
