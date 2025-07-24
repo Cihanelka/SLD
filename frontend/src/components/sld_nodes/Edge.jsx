@@ -23,6 +23,7 @@ function edgeAttrs(color = '#ff0000') {
 
 // Edge konfigürasyonunu merkezi olarak döndüren fonksiyon
 export function createEdgeConfig(edge, graph) {
+  if (edge.logic) return null; // mantıksal edge'leri hiç oluşturma
   let source = edge.source;
   let target = edge.target;
   if (typeof source === 'string') source = { cell: source };

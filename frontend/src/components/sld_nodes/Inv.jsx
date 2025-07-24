@@ -28,15 +28,16 @@ const settingsIconStyle = {
 };
 
 const Inv = ({ node, width = 36, height = 36 }) => {
+  console.log(node.getData())
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState(node?.getData?.()?.label || 'INV');
-  const [tomlId, setTomlId] = useState(node?.getData?.()?.toml_id || '');
+  const [tomlId, setTomlId] = useState(node?.getData?.()?.tomlId || '');
   const [loading, setLoading] = useState(false);
 
   const handleSave = () => {
     setLoading(true);
     try {
-      node.setData({ ...node.getData(), label, toml_id: tomlId });
+      node.setData({ ...node.getData(), label, tomlId: tomlId });
       if (node.setAttrByPath) node.setAttrByPath('label/text', label);
     } catch (e) {
       alert('Node güncellenemedi: ' + e.message);

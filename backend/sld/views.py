@@ -69,22 +69,8 @@ class SaveSchemaView(APIView):
                 schema=schema,
                 node_type=node_type,
                 toml_id=toml_id
-                # parent şimdilik yok
             )
             nodes_map[node_id] = node
-
-        # Parent ilişkilerini kur (ikinci tur)
-        for cell in cells:
-            if cell.get("shape") == "edge":
-                continue
-            node_id = cell.get("id")
-            parent_id = cell.get("parent")
-            if parent_id:
-                node = nodes_map.get(node_id)
-                parent = nodes_map.get(parent_id)
-                if node and parent:
-                    node.parent = parent
-                    node.save()
 
         # Edge'leri kaydet
         for cell in cells:
@@ -153,8 +139,7 @@ class SchemaDetailView(APIView):
                 "width": n.width,
                 "height": n.height,
                 "type": n.node_type,
-                "toml_id": n.toml_id,
-                "parent": n.parent.node_id if n.parent else None,
+                "toml_id": n.toml_id
             }
             for n in nodes
         ]

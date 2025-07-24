@@ -1,4 +1,4 @@
-import { createEdge, removeEdge, updateEdge } from './sld_nodes/Edge';
+// importlar sadeleştirildi, kullanılmayanlar kaldırıldı
 // Graph'ı backend'e kaydeder
 export const saveSchema = async (graphRef, schemaInfo) => {
   if (!graphRef.current) return;
@@ -8,18 +8,25 @@ export const saveSchema = async (graphRef, schemaInfo) => {
 
   const cells = [];
 
+  // findAllConnectedTargets fonksiyonu kaldırıldı
+
   nodes.forEach(node => {
+    console.log(node.getData())
     const position = node.getPosition();
     const size = node.getSize();
-    const labelText = node.getAttrByPath('label/text') || node.getProp('label') || node.getProp('type') || node.getAttrByPath('nodeType') || '';
-    const nodeType = node.getProp('nodeType') || node.getAttrByPath('nodeType') || '';
-    // Parent id'yi al
+    const labelText = node.getAttrByPath('label/text')
+      || node.getProp('label')
+      || node.getProp('type')
+      || node.getAttrByPath('nodeType')
+      || '';
+    const nodeType = node.getProp('nodeType')
+      || node.getAttrByPath('nodeType')
+      || '';
     let parentId = null;
     if (typeof node.getParent === 'function') {
       const parent = node.getParent();
       if (parent) parentId = parent.id;
     }
-
     cells.push({
       id: node.id,
       shape: 'rect',
@@ -27,31 +34,41 @@ export const saveSchema = async (graphRef, schemaInfo) => {
       y: position.y,
       width: size.width,
       height: size.height,
-      label: labelText || nodeType, // label boşsa type kullan
+      label: labelText || nodeType,
       type: nodeType,
       attrs: node.getAttrs(),
-      toml_id: (typeof node.getData === 'function' && node.getData() && node.getData().toml_id) ? node.getData().toml_id : '',
-      parent: parentId // <-- parent id'yi ekle
+      toml_id: (
+        typeof node.getData === 'function'
+          ? (node.getData() && node.getData().tomlId ? node.getData().tomlId : '')
+          : ''
+      )
+      // parent: parentId kaldırıldı
     });
   });
 
   edges.forEach(edge => {
+    if (edge.logic) return; // mantıksal edge'i kaydetme
     const source = edge.getSource();
     const target = edge.getTarget();
-    const labelText = edge.getAttrByPath('label/text') || edge.getProp && edge.getProp('type') || '';
-    const edgeType = edge.getProp && edge.getProp('type') || '';
-
+    const labelTextEdge = edge.getAttrByPath('label/text')
+      || (edge.getProp && edge.getProp('type'))
+      || '';
+    const edgeType = (edge.getProp && edge.getProp('type'))
+      || '';
     cells.push({
       id: edge.id,
       shape: 'edge',
-      source: source.cell || source,
-      target: target.cell || target,
-      label: labelText || edgeType, // label boşsa type kullan
-      router: { name: 'manhattan' }, // L çizgi
-      connector: { name: 'jumpover' }, // atlama efekti
+      source: (source.cell || source),
+      target: (target.cell || target),
+      label: (labelTextEdge || edgeType),
+      router: { name: 'manhattan' },
+      connector: { name: 'jumpover' },
       attrs: edge.getAttrs()
     });
   });
+
+  // Mantıksal (transitif) INV-ADP edge'leri ekle
+  // KALDIRILDI: Mantıksal edge'ler artık eklenmiyor
 
   const graphData = { cells };
 

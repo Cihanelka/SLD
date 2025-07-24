@@ -7,61 +7,54 @@ import { addNode, createNodeConfig } from './nodeUtils';
 import { saveSchema, loadSchemaData } from './SchemaService';
 import { createEdgeConfig } from './sld_nodes/Edge';
 
-// Şema editörü ana bileşeni, graph ve node yönetimini yapar
 function SchemaEditor({ schemaInfo, onBackToSchemas }) {
   const graphRef = useRef(null);
-  const addEdgeRef = useRef(null);
-  const [mode, setMode] = useState('edit');
-  const [nodes, setNodes] = useState([]);
-  const [edges, setEdges] = useState([]);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [realtimedata, setRealtimeData] = useState([]);
-  const [isDirty, setIsDirty] = useState(false);
-  const [suppressDirty, setSuppressDirty] = useState(false);
+  const [state, setState] = useState({
+    mode: 'edit',
+    nodes: [],
+    edges: [],
+    selectedNode: null,
+    realtimedata: [],
+    isDirty: false,
+    suppressDirty: false,
+  });
 
   useEffect(() => {
     fetch('/api/realtime-data/')
       .then(res => res.json())
-      .then(data => setRealtimeData(data.realtimedata || []));
+      .then(data => setState(prev => ({ ...prev, realtimedata: data.realtimedata || [] })));
   }, []);
 
-  // Yeni node ekler
   const handleAddNode = (type) => {
-    addNode(graphRef, type, setNodes);
+    addNode(graphRef, type, nodes => setState(prev => ({ ...prev, nodes })));
   };
 
-  // Edge ile ilgili işlemler sadece Edge.jsx fonksiyonlarından çağrılacak.
-
-  // Graph değiştiğinde dirty flag'i günceller
   const handleGraphChange = () => {
-    if (!suppressDirty) setIsDirty(true);
+    if (!state.suppressDirty) setState(prev => ({ ...prev, isDirty: true }));
   };
 
-  // Şemayı kaydeder
   const handleSave = async () => {
-    setSuppressDirty(true);
+    setState(prev => ({ ...prev, suppressDirty: true }));
     await saveSchema(graphRef, schemaInfo);
-    setSuppressDirty(false);
-    setIsDirty(false);
+    setState(prev => ({ ...prev, suppressDirty: false, isDirty: false }));
   };
 
   useEffect(() => {
     if (!schemaInfo) return;
 
     const loadData = async () => {
-      setSuppressDirty(true);
+      setState(prev => ({ ...prev, suppressDirty: true }));
       if (graphRef.current) {
         if (schemaInfo.schema_id && schemaInfo.schema_id > 0) {
           try {
             const data = await loadSchemaData(schemaInfo.schema_id);
             graphRef.current.clearCells();
-            setNodes([]);
-            setEdges([]);
+            setState(prev => ({ ...prev, nodes: [], edges: [] }));
 
             data.nodes.forEach(node => {
               const nodeType = node.type || node.label || 'rect';
-              // Backend'den gelen node ile createNodeConfig'un birleşimi
               const defaultConfig = createNodeConfig(nodeType);
+              const tomlId = node.toml_id; 
 
               const mergedNodeConfig = {
                 ...defaultConfig,
@@ -70,66 +63,57 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
                 y: node.y,
                 width: node.width || defaultConfig.width,
                 height: node.height || defaultConfig.height,
-                data: { ...defaultConfig.data, label: (node.label || nodeType), type: nodeType },
+                data: { ...defaultConfig.data, label: (node.label || nodeType), type: nodeType, tomlId: tomlId },
                 attrs: node.attrs || defaultConfig.attrs,
               };
 
               graphRef.current.addNode(mergedNodeConfig);
             });
 
-            // Parent-child embed ilişkisini tekrar kur
-            if (data.nodes.some(n => n.parent)) {
-              data.nodes.forEach(node => {
-                if (node.parent) {
-                  const parent = graphRef.current.getCellById(node.parent);
-                  const child = graphRef.current.getCellById(node.id);
-                  if (parent && child) parent.embed(child);
-                }
-              });
-            }
-
             data.edges.forEach(edge => {
-              graphRef.current.addEdge(createEdgeConfig(edge, graphRef.current));
+              if (edge.logic) return;
+              const edgeConfig = createEdgeConfig(edge, graphRef.current);
+              if (edgeConfig) graphRef.current.addEdge(edgeConfig);
             });
 
-            setNodes(data.nodes);
-            setEdges(data.edges);
-            setIsDirty(false);
+            setState(prev => ({
+              ...prev,
+              nodes: data.nodes,
+              edges: data.edges.filter(e => !e.logic),
+              isDirty: false,
+            }));
           } catch (error) {
             console.error('Backend hatası:', error);
             graphRef.current.clearCells();
-            setNodes([]);
-            setEdges([]);
-            setIsDirty(false);
+            setState(prev => ({ ...prev, nodes: [], edges: [], isDirty: false }));
           }
         } else {
           graphRef.current.clearCells();
-          setNodes([]);
-          setEdges([]);
-          setIsDirty(false);
+          setState(prev => ({ ...prev, nodes: [], edges: [] }));
+          setState(prev => ({ ...prev, isDirty: false }));
         }
       } else {
         setTimeout(loadData, 100);
       }
-      setSuppressDirty(false);
+      setState(prev => ({ ...prev, suppressDirty: false }));
     };
 
     loadData();
-  }, [schemaInfo]); // Sadece schemaInfo değişince çalışsın
+  }, [schemaInfo]);
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Topbar
         schemaName={schemaInfo?.name || ''}
-        mode={mode}
-        onModeChange={setMode}
+        mode={state.mode}
+        onModeChange={setMode => setState(prev => ({ ...prev, mode: setMode }))}
         onSave={handleSave}
         onChangeSchema={onBackToSchemas}
-        canSave={isDirty}
+        canSave={state.isDirty}
       />
 
       <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 120px)', overflow: 'hidden' }}>
-        {mode === 'edit' && <Toolbar onAddNode={handleAddNode} onAddEdge={addEdgeRef} />}
+        {state.mode === 'edit' && <Toolbar onAddNode={handleAddNode} />}
         <div
           style={{
             flex: 1,
@@ -145,21 +129,20 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
           <GraphCanvas
             key={schemaInfo?.schema_id}
             graphRef={graphRef}
-            mode={mode}
-            setSelectedNode={setSelectedNode}
-            onAddEdge={addEdgeRef}
-            nodes={nodes}
-            edges={edges}
-            setNodes={setNodes}
+            mode={state.mode}
+            setSelectedNode={setSelectedNode => setState(prev => ({ ...prev, selectedNode: setSelectedNode }))}
+            nodes={state.nodes}
+            edges={state.edges}
+            setNodes={nodes => setState(prev => ({ ...prev, nodes }))}
             onGraphChange={handleGraphChange}
           />
         </div>
         <Sidebar
-          nodes={nodes}
-          selectedNode={selectedNode}
-          setNodes={setNodes}
+          nodes={state.nodes}
+          selectedNode={state.selectedNode}
+          setNodes={nodes => setState(prev => ({ ...prev, nodes }))}
           graphRef={graphRef}
-          realtimedata={realtimedata}
+          realtimedata={state.realtimedata}
         />
       </div>
     </div>

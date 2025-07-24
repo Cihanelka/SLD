@@ -50,7 +50,6 @@ const invisiblePorts = {
   ]
 };
 
-// Node config'lerinde invisiblePorts'u tekrar kullan
 export const createNodeConfig = (type) => {
   const nodeId = `node-${Date.now()}`;
   const base = {
@@ -159,9 +158,6 @@ export const createNodeConfig = (type) => {
   }
 };
 
-
-
-// Graph'a yeni bir node ekler ve state'i günceller
 export const addNode = (graphRef, type, setNodes) => {
   if (!graphRef.current) return;
   const nodeConfig = createNodeConfig(type);

@@ -1,47 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import SchemaSelector from './SchemaSelector';
 import SchemaEditor from './SchemaEditor';
 import './App.css';
 
-// Ana uygulama bileşeni, routing ve şema yönetimini yapar
 function App() {
-  const [schemas, setSchemas] = useState([]);
-  const [selectedSchema, setSelectedSchema] = useState(null);
+  const [state, setState] = useState({ schemas: [], selectedSchema: null }) 
 
-  // Şemaları yükle
-  useEffect(() => {
+    useEffect(() => {
     fetch('http://localhost:8000/api/list-schemas/')
-      .then(res => res.json())
-      .then(setSchemas)
-      .catch(err => console.error('Şema yükleme hatası:', err));
-  }, []);
+    .then(res => res.json() 
+    .then(data => setState(prev => ({...prev,schemas:data}))))
+    .catch(err => console.error('Şema Yükleme Hatası:', err));
+     }, []);
 
-  // Yeni şema oluşturma fonksiyonu
   const createSchema = async (schemaName) => {
     try {
       const response = await fetch('http://localhost:8000/api/create-schema/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          name: schemaName, 
-          station_id: `station_${Date.now()}` 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+      name: schemaName, 
+      station_id: `station_${Date.now()}` 
         })
       });
       const data = await response.json();
-      setSchemas(prev => [data, ...prev]);
-      setSelectedSchema(data);
-    } catch (error) {
-      alert(`Şema oluşturma hatası: ${error.message}`);
-    }
+      setState((prevState) => ({
+        ...prevState,
+        schemas: [...prevState.schemas, data],
+        selectedSchema: data
+      }))
+    } catch (error) { alert(`Şema Oluşturma Hatası: ${error.message}`);}
   };
 
-  const handleSchemaSelect = (schema) => {
-    setSelectedSchema(schema);
+  const handleSchemaSelect = (schemas) => {
+    setState((prevState) => ({
+        ...prevState,
+        selectedSchema: schemas
+      }))
   };
 
   const handleBackToSchemas = () => {
-    setSelectedSchema(null);
+    setState((prevState) => ({
+        ...prevState,
+        selectedSchema: null
+      }))
   };
 
   return (
@@ -50,11 +53,11 @@ function App() {
         <Route 
           path="/" 
           element={
-            selectedSchema ? (
-              <Navigate to={`/schema/${selectedSchema.schema_id}`} replace />
+            state.selectedSchema ? (
+              <Navigate to={`/schema/${state.selectedSchema.schema_id}`} replace />
             ) : (
               <SchemaSelector 
-                schemas={schemas}
+                schemas={state.schemas}
                 onSchemaSelect={handleSchemaSelect}
                 onCreateSchema={createSchema}
               />
@@ -64,9 +67,9 @@ function App() {
         <Route 
           path="/schema/:schemaId" 
           element={
-            selectedSchema ? (
+            state.selectedSchema ? (
               <SchemaEditor 
-                schemaInfo={selectedSchema}
+                schemaInfo={state.selectedSchema}
                 onBackToSchemas={handleBackToSchemas}
               />
             ) : (
