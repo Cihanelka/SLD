@@ -1,5 +1,9 @@
-// importlar sadeleştirildi, kullanılmayanlar kaldırıldı
-// Graph'ı backend'e kaydeder
+const fetchJson = async (url, options) => {
+  const response = await fetch(url, options);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return await response.json();
+};
+
 export const saveSchema = async (graphRef, schemaInfo) => {
   if (!graphRef.current) return;
 
@@ -8,10 +12,7 @@ export const saveSchema = async (graphRef, schemaInfo) => {
 
   const cells = [];
 
-  // findAllConnectedTargets fonksiyonu kaldırıldı
-
   nodes.forEach(node => {
-    console.log(node.getData())
     const position = node.getPosition();
     const size = node.getSize();
     const labelText = node.getAttrByPath('label/text')
@@ -22,11 +23,6 @@ export const saveSchema = async (graphRef, schemaInfo) => {
     const nodeType = node.getProp('nodeType')
       || node.getAttrByPath('nodeType')
       || '';
-    let parentId = null;
-    if (typeof node.getParent === 'function') {
-      const parent = node.getParent();
-      if (parent) parentId = parent.id;
-    }
     cells.push({
       id: node.id,
       shape: 'rect',
@@ -42,12 +38,11 @@ export const saveSchema = async (graphRef, schemaInfo) => {
           ? (node.getData() && node.getData().tomlId ? node.getData().tomlId : '')
           : ''
       )
-      // parent: parentId kaldırıldı
     });
   });
 
   edges.forEach(edge => {
-    if (edge.logic) return; // mantıksal edge'i kaydetme
+    if (edge.logic) return;
     const source = edge.getSource();
     const target = edge.getTarget();
     const labelTextEdge = edge.getAttrByPath('label/text')
@@ -67,13 +62,10 @@ export const saveSchema = async (graphRef, schemaInfo) => {
     });
   });
 
-  // Mantıksal (transitif) INV-ADP edge'leri ekle
-  // KALDIRILDI: Mantıksal edge'ler artık eklenmiyor
-
   const graphData = { cells };
 
   try {
-    const response = await fetch('http://localhost:8000/api/save-schema/', {
+    await fetchJson('http://localhost:8000/api/save-schema/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -82,36 +74,24 @@ export const saveSchema = async (graphRef, schemaInfo) => {
         data: graphData,
       }),
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
     alert('Şema başarıyla kaydedildi!');
   } catch (error) {
     alert(`Kaydetme hatası: ${error.message}`);
   }
 };
 
-// Backend'den şema verilerini yükler
 export const loadSchemaData = async (schemaId) => {
   try {
-    const response = await fetch(`http://localhost:8000/api/schema-detail/${schemaId}/`);
-    return await response.json();
+    return await fetchJson(`http://localhost:8000/api/schema-detail/${schemaId}/`);
   } catch (error) {
     console.error('Backend hatası:', error);
     throw error;
   }
 };
 
-// TOML ID ile node detayını getirir
 export const getNodeDetailByTomlId = async (tomlId) => {
   try {
-    const response = await fetch(`http://localhost:8000/api/node-detail/${tomlId}/`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return await response.json();
+    return await fetchJson(`http://localhost:8000/api/node-detail/${tomlId}/`);
   } catch (error) {
     console.error('Node detay hatası:', error);
     throw error;
