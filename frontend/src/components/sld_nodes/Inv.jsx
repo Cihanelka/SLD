@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Icon, Modal, Button, Input } from 'semantic-ui-react';
-import { updateNodeOnServer } from '../nodeUtils';
 
 const boxStyle = {
   width: 36,
@@ -28,22 +27,22 @@ const settingsIconStyle = {
 };
 
 const Inv = ({ node, width = 36, height = 36 }) => {
-  console.log(node.getData())
-  const [open, setOpen] = useState(false);
-  const [label, setLabel] = useState(node?.getData?.()?.label || 'INV');
-  const [tomlId, setTomlId] = useState(node?.getData?.()?.tomlId || '');
-  const [loading, setLoading] = useState(false);
+  const [state,setState] = useState({
+    open:false,
+    label:node?.getData?.()?.label || 'INV',
+    tomlId:node?.getData?.()?.tomlId || '',
+    loading:false,
+})
 
   const handleSave = () => {
-    setLoading(true);
-    try {
-      node.setData({ ...node.getData(), label, tomlId: tomlId });
-      if (node.setAttrByPath) node.setAttrByPath('label/text', label);
+    setState(prev => ({...prev , loading:true}))    
+      try {
+      node.setData({ ...node.getData(), label:state.label, tomlId: state.tomlId });
+      if (node.setAttrByPath) node.setAttrByPath('label/text', state.label);
     } catch (e) {
       alert('Node güncellenemedi: ' + e.message);
     }
-    setLoading(false);
-    setOpen(false);
+    setState(prev => ({...prev, loading:false, open:false }));
   };
 
   return (
@@ -61,9 +60,9 @@ const Inv = ({ node, width = 36, height = 36 }) => {
           pointerEvents: 'auto',
         }}
         onMouseDown={e => {
-          e.stopPropagation(); // X6'nın drag'ini engellemek istemiyorsan,} 
-        }}        // X6'nın drag'ini engellemek istemiyorsan, buraya event eklemene gerek yok
-        // Sadece bu alan drag için açık olacak
+          e.stopPropagation(); 
+        }}       
+      
       />
       <Icon
         name="settings"
@@ -71,11 +70,11 @@ const Inv = ({ node, width = 36, height = 36 }) => {
         size="small"
         onClick={e => {
           e.stopPropagation();
-          setOpen(true);
+          setState(prev => ({...prev,open:true}));
         }}
       />
-      {label}
-      <Modal open={open} onClose={() => setOpen(false)} size="tiny">
+      {state.label}
+      <Modal open={state.open} onClose={() =>setState(prev => ({...prev,open:false}))} size="tiny">
         <Modal.Header>
           <Icon name="settings" /> Ayarlar
         </Modal.Header>
@@ -83,21 +82,21 @@ const Inv = ({ node, width = 36, height = 36 }) => {
           <Input
             fluid
             label="Label"
-            value={label}
-            onChange={e => setLabel(e.target.value)}
+            value={state.label}
+            onChange={e => setState(prev => ({...prev, label: e.target.value}))}
             style={{ marginBottom: 16 }}
           />
           <Input
             fluid
             label="TOML ID"
-            value={tomlId}
-            onChange={e => setTomlId(e.target.value)}
+            value={state.tomlId}
+            onChange={e => setState(prev => ({...prev, tomlId: e.target.value}))}
             style={{ marginBottom: 16 }}
           />
         </Modal.Content>
         <Modal.Actions>
-          <Button onClick={() => setOpen(false)} color="grey" disabled={loading}>İptal</Button>
-          <Button onClick={handleSave} color="red" loading={loading} disabled={loading}>Kaydet</Button>
+          <Button onClick={() =>setState(prev => ({...prev, open:false}))} color="grey" disabled={state.loading}>İptal</Button>
+          <Button onClick={handleSave} color="red" loading={state.loading} disabled={state.loading}>Kaydet</Button>
         </Modal.Actions>
       </Modal>
     </div>

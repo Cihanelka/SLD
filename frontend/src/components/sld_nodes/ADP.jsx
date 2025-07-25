@@ -33,20 +33,23 @@ const settingsIconStyle = {
 };
 
 const ADP = ({ node, width = 180, height = 140 }) => {
-  const [open, setOpen] = useState(false);
-  const [label, setLabel] = useState(node?.getData?.()?.label || 'ADP');
-  const [loading, setLoading] = useState(false);
+const[state , setState] = useState({
+  open: false,
+  label: node?.getData?.()?.label || 'ADP',
+  loading: false,
+})
 
   const handleSave = () => {
-    setLoading(true);
-    try {
-      node.setData({ ...node.getData(), label });
-      if (node.setAttrByPath) node.setAttrByPath('label/text', label);
-    } catch (e) {
-      alert('Node güncellenemedi: ' + e.message);
+  setState(prev => ({...prev, loading: true}));
+    try{
+      node.setData({...node.getData(), label:state.label});
+      if(node.setAttrByPath){
+        node.setAttrByPath('label/text',state.label);
+      }
+    }catch(e){
+      alert('Node Güncellenemedi: ' + e.message);
     }
-    setLoading(false);
-    setOpen(false);
+    setState(prev => ({...prev, loading:false, open:false}));
   };
 
   return (
@@ -66,11 +69,18 @@ const ADP = ({ node, width = 180, height = 140 }) => {
         onMouseDown={e => {
           e.stopPropagation();
         }}
-      
       />
-      <Icon name="settings" style={settingsIconStyle} size="small" onClick={e => { e.stopPropagation(); setOpen(true); }} />
-      <div style={titleStyle}>{label}</div>
-      <Modal open={open} onClose={() => setOpen(false)} size="tiny">
+      <Icon 
+      name="settings" 
+      style={settingsIconStyle} 
+      size="small" 
+      onClick={e => { e.stopPropagation(); 
+       setState(prev => ({...prev , open:true})); }} 
+      />
+      <div style={titleStyle}>{state.label}</div>
+
+      <Modal open={state.open} onClose={() => 
+        setState(prev => ({...prev, open:false}))} size="tiny">
         <Modal.Header>
           <Icon name="settings" /> Ayarlar
         </Modal.Header>
@@ -78,18 +88,18 @@ const ADP = ({ node, width = 180, height = 140 }) => {
           <Input
             fluid
             label="Label"
-            value={label}
-            onChange={e => setLabel(e.target.value)}
+            value={state.label}
+            onChange={e => setState(prev => ({...prev,label:e.target.value}))}
             style={{ marginBottom: 16 }}
           />
         </Modal.Content>
         <Modal.Actions>
-          <Button onClick={() => setOpen(false)} color="grey">İptal</Button>
-          <Button onClick={handleSave} color="red" loading={loading}>Kaydet</Button>
+          <Button onClick={() => setState(prev => ({...prev,open:false}))}
+          color="grey">İptal</Button>
+          <Button onClick={handleSave} color="red" loading={state.loading}>Kaydet</Button>
         </Modal.Actions>
       </Modal>
     </div>
   );
 };
-
 export default ADP;

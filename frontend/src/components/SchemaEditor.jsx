@@ -14,30 +14,9 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
     nodes: [],
     edges: [],
     selectedNode: null,
-    realtimedata: [],
     isDirty: false,
     suppressDirty: false,
   });
-
-  useEffect(() => {
-    fetch('/api/realtime-data/')
-      .then(res => res.json())
-      .then(data => setState(prev => ({ ...prev, realtimedata: data.realtimedata || [] })));
-  }, []);
-
-  const handleAddNode = (type) => {
-    addNode(graphRef, type, nodes => setState(prev => ({ ...prev, nodes })));
-  };
-
-  const handleGraphChange = () => {
-    if (!state.suppressDirty) setState(prev => ({ ...prev, isDirty: true }));
-  };
-
-  const handleSave = async () => {
-    setState(prev => ({ ...prev, suppressDirty: true }));
-    await saveSchema(graphRef, schemaInfo);
-    setState(prev => ({ ...prev, suppressDirty: false, isDirty: false }));
-  };
 
   useEffect(() => {
     if (!schemaInfo) return;
@@ -101,6 +80,20 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
     loadData();
   }, [schemaInfo]);
 
+  const handleAddNode = (type) => {
+    addNode(graphRef, type, nodes => setState(prev => ({ ...prev, nodes })));
+  };
+
+  const handleGraphChange = () => {
+    if (!state.suppressDirty) setState(prev => ({ ...prev, isDirty: true }));
+  };
+
+  const handleSave = async () => {
+    setState(prev => ({ ...prev, suppressDirty: true }));
+    await saveSchema(graphRef, schemaInfo);
+    setState(prev => ({ ...prev, suppressDirty: false, isDirty: false }));
+  };
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Topbar
@@ -142,7 +135,6 @@ function SchemaEditor({ schemaInfo, onBackToSchemas }) {
           selectedNode={state.selectedNode}
           setNodes={nodes => setState(prev => ({ ...prev, nodes }))}
           graphRef={graphRef}
-          realtimedata={state.realtimedata}
         />
       </div>
     </div>

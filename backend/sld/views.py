@@ -46,7 +46,6 @@ class SaveSchemaView(APIView):
         cells = data.get("cells", [])
         nodes_map = {}
 
-        # Node'ları kaydet (ilk turda parent olmadan)
         for cell in cells:
             if cell.get("shape") == "edge":
                 continue
@@ -201,23 +200,3 @@ class NodeUpdateByNodeIdView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-def realtime_data(request):
-    data = {
-        "realtimedata": [
-            {
-                "id": "datalogger_id",
-                "name": "Datalogger1",
-                "devices": [
-                    {
-                        "toml_id": "toml_id_1",
-                        "name": "Schema Button",
-                        "data": {
-                            "status": True,
-                        }
-                    }
-                ]
-            }
-        ]
-    }
-    return JsonResponse(data)

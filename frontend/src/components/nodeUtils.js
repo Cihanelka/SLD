@@ -4,7 +4,6 @@ import Inv from './sld_nodes/Inv'
 import Meter from './sld_nodes/Meter'
 import Busbar from './sld_nodes/Busbar'
 
-// X6 custom React shape'lerini register eder
 register({
   shape: 'adp-shape',
   component: (props) => <ADP {...props} />
@@ -22,7 +21,6 @@ register({
   component: (props) => <Busbar {...props} />
 });
 
-// Invisible (görünmez) portları tek bir yerde tanımla
 const invisiblePorts = {
   groups: {
     top: {
@@ -162,7 +160,7 @@ export const addNode = (graphRef, type, setNodes) => {
   if (!graphRef.current) return;
   const nodeConfig = createNodeConfig(type);
   graphRef.current.addNode(nodeConfig);
-  setNodes(prev => [...prev, { id: nodeConfig.id, type }]);
+  setNodes(prev => [...prev, { id: nodeConfig.id, type, label: nodeConfig.data.label }]);
 };
 
 export const updateNodeOnServer = async (node_id, label, toml_id) => {

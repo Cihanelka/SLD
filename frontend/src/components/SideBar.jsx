@@ -1,15 +1,8 @@
 import React from 'react';
 
 // Node listesini ve seçili node'u gösteren sidebar bileşeni
-export default function Sidebar({ nodes, selectedNode, setNodes, mode, graphRef, realtimedata }) {
+export default function Sidebar({ nodes, selectedNode, setNodes, mode, graphRef }) {
   const nodeList = Array.isArray(nodes) ? nodes : [];
-  let matchedDevice = null;
-  if (selectedNode && realtimedata) {
-    for (const group of realtimedata) {
-      matchedDevice = group.devices.find(dev => dev.id === selectedNode.tomlId);
-      if (matchedDevice) break;
-    }
-  }
   return (
     <div className="sidebar sidebar-modern">
       <h3 className="sidebar-title">Node Listesi {mode === 'edit' && '(Edit Modu)'}</h3>
@@ -20,14 +13,6 @@ export default function Sidebar({ nodes, selectedNode, setNodes, mode, graphRef,
           <div><b>Label:</b> {selectedNode.label}</div>
           <div><b>Type:</b> {selectedNode.type}</div>
           {selectedNode.tomlId && <div><b>TOML ID:</b> {selectedNode.tomlId}</div>}
-          {/* Eşleşen device verisi */}
-          {matchedDevice && (
-            <div style={{marginTop: 12, padding: 8, background: '#f8f8f8', borderRadius: 6}}>
-              <b>Realtime Data:</b>
-              <div><b>Device Name:</b> {matchedDevice.name}</div>
-              <div><b>Status:</b> {matchedDevice.data?.status ? 'Aktif' : 'Pasif'}</div>
-            </div>
-          )}
           <button
             style={{marginTop: 12, padding: '8px 16px', background: '#ff4d4f', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer'}}
             onClick={() => {
